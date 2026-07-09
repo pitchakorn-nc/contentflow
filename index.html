@@ -14,27 +14,27 @@
   --grad: linear-gradient(135deg, #7C3AED 0%, #C2410C 55%, #DC2626 100%);
   --grad-soft: linear-gradient(135deg, #ede9fe 0%, #ffedd5 55%, #fee2e2 100%);
 
-  --bg:       #F5F3FF;
-  --bg2:      #EDE9FE;
-  --surface:  #FFFFFF;
-  --surface2: #FAFAFA;
-  --border:   #DDD6FE;
-  --border2:  #C4B5FD;
+  --bg:        #F5F3FF;
+  --bg2:       #EDE9FE;
+  --surface:   #FFFFFF;
+  --surface2:  #FAFAFA;
+  --border:    #DDD6FE;
+  --border2:   #C4B5FD;
 
-  --text:     #1E1B4B;
-  --text2:    #5B21B6;
-  --text3:    #A78BFA;
+  --text:      #1E1B4B;
+  --text2:     #5B21B6;
+  --text3:     #A78BFA;
 
-  --teal:     #0D9488;
-  --teal-l:   #CCFBF1;
-  --amber:    #D97706;
-  --amber-l:  #FEF3C7;
-  --rose:     #E11D48;
-  --rose-l:   #FFE4E6;
-  --blue:     #2563EB;
-  --blue-l:   #DBEAFE;
-  --green:    #16A34A;
-  --green-l:  #DCFCE7;
+  --teal:      #0D9488;
+  --teal-l:    #CCFBF1;
+  --amber:     #D97706;
+  --amber-l:   #FEF3C7;
+  --rose:      #E11D48;
+  --rose-l:    #FFE4E6;
+  --blue:      #2563EB;
+  --blue-l:    #DBEAFE;
+  --green:     #16A34A;
+  --green-l:   #DCFCE7;
 
   --radius:    10px;
   --radius-lg: 18px;
@@ -229,17 +229,28 @@ body {
 
 .k-card {
   background: var(--surface); border-radius: var(--radius);
-  border: 1px solid var(--border); padding: 10px 12px;
+  border: 1px solid var(--border); padding: 0;
   margin-bottom: 8px; cursor: pointer;
   transition: box-shadow .15s, border-color .15s;
+  overflow: hidden;
 }
 .k-card:hover { box-shadow: var(--shadow-md); border-color: var(--border2); }
-.k-card.is-overdue { border-left: 3px solid var(--rose); border-radius: 0 var(--radius) var(--radius) 0; }
-.k-card.is-today   { border-left: 3px solid var(--amber); border-radius: 0 var(--radius) var(--radius) 0; }
+.k-card-content { padding: 10px 12px; }
+.k-card.is-overdue { border-left: 3px solid var(--rose); }
+.k-card.is-today   { border-left: 3px solid var(--amber); }
 .k-card.is-posted  { opacity: .55; }
 .k-title { font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text); line-height: 1.4; }
 .k-meta  { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
 .k-note  { font-size: 11px; color: var(--text3); margin-top: 5px; }
+
+/* โครงสร้างรูปภาพบนการ์ดคันบัง */
+.k-thumb {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  display: block;
+  border-bottom: 1px solid var(--border);
+}
 
 .ptag { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 6px; letter-spacing: .2px; }
 .date-tag { font-size: 11px; color: var(--text3); display: flex; align-items: center; gap: 3px; }
@@ -322,6 +333,18 @@ body {
 .btn-delete { background: var(--rose-l); border: 1px solid #fca5a5; color: var(--rose); }
 .btn-delete:hover { background: #fecdd3; }
 
+/* สไตล์พรีวิวรูปภายในหน้าต่างเพิ่มงาน */
+.preview-wrap {
+  position: relative; margin-top: 6px; display: none;
+}
+.preview-img {
+  width: 100%; height: 140px; object-fit: cover; border-radius: var(--radius); border: 1px solid var(--border);
+}
+.btn-remove-img {
+  position: absolute; top: 5px; right: 5px; background: rgba(225,29,72,0.9); color: #fff; border: none;
+  border-radius: 50%; width: 24px; height: 24px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+
 .color-grid { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
 .color-swatch { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: transform .12s, border-color .12s; }
 .color-swatch:hover { transform: scale(1.15); }
@@ -365,14 +388,12 @@ body {
 </head>
 <body>
 
-<!-- Loading -->
 <div id="loading">
   <div class="loading-logo">ContentFlow</div>
   <div class="loading-bar"><div class="loading-fill"></div></div>
   <div class="loading-text">กำลังโหลดข้อมูลจาก Google Sheets...</div>
 </div>
 
-<!-- Sidebar -->
 <div id="sidebar" style="display:none">
   <div class="sidebar-logo">
     <h1>ContentFlow</h1>
@@ -410,7 +431,6 @@ body {
   </div>
 </div>
 
-<!-- Main -->
 <div id="main" style="display:none">
   <div id="topbar">
     <div class="topbar-title grad-text" id="topbar-title">Kanban Board</div>
@@ -426,7 +446,6 @@ body {
   </div>
 </div>
 
-<!-- Card Modal -->
 <div class="modal-overlay" id="modal-card">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-header"><h2 id="modal-card-title">เพิ่มงานใหม่</h2></div>
@@ -441,13 +460,22 @@ body {
         </div>
       </div>
       <div class="field"><label>วันที่ลงงาน</label><input type="date" id="f-date"></div>
+      
+      <div class="field">
+        <label>รูปภาพแนบงาน</label>
+        <input type="file" id="f-image" accept="image/*" onchange="previewFile()">
+        <div class="preview-wrap" id="preview-wrap">
+          <img src="" class="preview-img" id="img-render">
+          <button class="btn-remove-img" onclick="removeImage()">×</button>
+        </div>
+      </div>
+
       <div class="field"><label>โน้ต</label><textarea id="f-note" placeholder="Reel 30 วิ, Carousel 8 รูป..."></textarea></div>
       <div class="modal-btns" id="card-btns"></div>
     </div>
   </div>
 </div>
 
-<!-- Account Modal -->
 <div class="modal-overlay" id="modal-acct" onclick="closeAcctModal()">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-header"><h2>เพิ่มบัญชีใหม่</h2></div>
@@ -492,6 +520,7 @@ let state = {
   calYear: new Date().getFullYear(), calMonth: new Date().getMonth(),
 };
 let editCardId = null, pickedColor = ACCT_COLORS[0], syncing = false;
+let currentImageData = ""; // ตัวแปรเก็บรหัสรูปภาพชั่วคราวชั่วขณะ
 
 /* ── API ── */
 async function fetchData() {
@@ -567,6 +596,25 @@ function cardCls(c) {
   return 'k-card';
 }
 
+/* ── ฟังก์ชันจัดการรูปภาพพรีวิวในหน้า Modal ── */
+function previewFile() {
+  const file = document.getElementById('f-image').files[0];
+  const reader = new FileReader();
+  reader.addEventListener("load", function () {
+    currentImageData = reader.result;
+    document.getElementById('img-render').src = reader.result;
+    document.getElementById('preview-wrap').style.display = 'block';
+  }, false);
+  if (file) { reader.readAsDataURL(file); }
+}
+
+function removeImage() {
+  document.getElementById('f-image').value = "";
+  currentImageData = "";
+  document.getElementById('img-render').src = "";
+  document.getElementById('preview-wrap').style.display = 'none';
+}
+
 /* ── Render ── */
 function render() {
   renderSidebar(); renderTopbar(); renderStats();
@@ -620,12 +668,15 @@ function renderKanban() {
       ${cards.map(c => {
         const p = PC[c.platform]||{bg:'#eee',text:'#555'};
         return `<div class="${cardCls(c)}" onclick="openEdit(${c.id})">
-          <div class="k-title">${c.title}</div>
-          <div class="k-meta">
-            <span class="ptag" style="background:${p.bg};color:${p.text}">${c.platform}</span>
-            ${c.date?`<span class="date-tag">📅 ${fmt(c.date)}</span>`:''}
+          ${c.image ? `<img src="${c.image}" class="k-thumb">` : ''}
+          <div class="k-card-content">
+            <div class="k-title">${c.title}</div>
+            <div class="k-meta">
+              <span class="ptag" style="background:${p.bg};color:${p.text}">${c.platform}</span>
+              ${c.date?`<span class="date-tag">📅 ${fmt(c.date)}</span>`:''}
+            </div>
+            ${c.note?`<div class="k-note">${c.note}</div>`:''}
           </div>
-          ${c.note?`<div class="k-note">${c.note}</div>`:''}
         </div>`;
       }).join('')}
       <button class="k-add" onclick="openAdd('${col.id}')">+ เพิ่มงาน</button>`;
@@ -677,6 +728,7 @@ function switchAcct(id){ state.activeAcct=id; render(); }
 /* ── Card Modal ── */
 function openAdd(status,date=''){
   editCardId=null;
+  removeImage(); // รีเซ็ตล้างรูปภาพเดิมค้างเก่าออก
   document.getElementById('modal-card-title').textContent='เพิ่มงานใหม่';
   document.getElementById('f-title').value='';
   document.getElementById('f-plat').value='Instagram';
@@ -690,12 +742,21 @@ function openAdd(status,date=''){
 }
 function openEdit(id){
   const c=state.cards.find(x=>x.id===id); editCardId=id;
+  removeImage(); // รีเซ็ตสถานะรูปภาพพรีวิวก่อนดึงค่าใหม่
   document.getElementById('modal-card-title').textContent='แก้ไขงาน';
   document.getElementById('f-title').value=c.title;
   document.getElementById('f-plat').value=c.platform;
   document.getElementById('f-status').value=c.status;
   document.getElementById('f-date').value=c.date||'';
   document.getElementById('f-note').value=c.note||'';
+  
+  // โหลดรูปภาพเดิมที่มีขึ้นพรีวิวถ้าพบข้อมูล
+  if (c.image) {
+    currentImageData = c.image;
+    document.getElementById('img-render').src = c.image;
+    document.getElementById('preview-wrap').style.display = 'block';
+  }
+  
   document.getElementById('card-btns').innerHTML=`
     <button class="btn-delete" onclick="deleteCard(${id})">ลบ</button>
     <button class="btn-cancel" onclick="closeCardModal()">ยกเลิก</button>
@@ -714,6 +775,7 @@ function saveCard(){
     platform:document.getElementById('f-plat').value,
     status:document.getElementById('f-status').value,
     date:document.getElementById('f-date').value,
+    image:currentImageData, // บันทึกข้อมูลรูปภาพลงในอ็อบเจกต์การ์ด
     note:document.getElementById('f-note').value.trim(),
     acctId:state.activeAcct,
   };
