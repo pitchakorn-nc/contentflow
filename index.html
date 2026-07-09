@@ -1,845 +1,345 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ContentFlow — ปฏิทินงาน Content Creator</title>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600&display=swap');
-
-:root {
-  --grad-1: #7C3AED;
-  --grad-2: #C2410C;
-  --grad-3: #DC2626;
-  --grad: linear-gradient(135deg, #7C3AED 0%, #C2410C 55%, #DC2626 100%);
-  --grad-soft: linear-gradient(135deg, #ede9fe 0%, #ffedd5 55%, #fee2e2 100%);
-
-  --bg:        #F5F3FF;
-  --bg2:       #EDE9FE;
-  --surface:   #FFFFFF;
-  --surface2:  #FAFAFA;
-  --border:    #DDD6FE;
-  --border2:   #C4B5FD;
-
-  --text:      #1E1B4B;
-  --text2:     #5B21B6;
-  --text3:     #A78BFA;
-
-  --teal:      #0D9488;
-  --teal-l:    #CCFBF1;
-  --amber:     #D97706;
-  --amber-l:   #FEF3C7;
-  --rose:      #E11D48;
-  --rose-l:    #FFE4E6;
-  --blue:      #2563EB;
-  --blue-l:    #DBEAFE;
-  --green:     #16A34A;
-  --green-l:   #DCFCE7;
-
-  --radius:    10px;
-  --radius-lg: 18px;
-  --shadow:    0 2px 12px rgba(124,58,237,0.08);
-  --shadow-md: 0 6px 24px rgba(124,58,237,0.15);
-}
-
-* { box-sizing: border-box; margin: 0; padding: 0; }
-
-body {
-  font-family: 'IBM Plex Sans Thai', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-/* ── Gradient helpers ── */
-.grad-text {
-  background: var(--grad);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-.grad-bg {
-  background: var(--grad);
-  color: #fff;
-}
-.grad-border {
-  border: 2px solid transparent;
-  background-clip: padding-box;
-  position: relative;
-}
-.grad-border::before {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  border-radius: calc(var(--radius) + 2px);
-  background: var(--grad);
-  z-index: -1;
-}
-
-/* ── Sidebar ── */
-#sidebar {
-  position: fixed; left: 0; top: 0; bottom: 0; width: 230px;
-  background: var(--surface);
-  border-right: 1px solid var(--border);
-  display: flex; flex-direction: column;
-  z-index: 100;
-  box-shadow: var(--shadow);
-}
-
-.sidebar-logo {
-  padding: 20px 20px 16px;
-  background: var(--grad);
-}
-.sidebar-logo h1 {
-  font-size: 20px; font-weight: 700;
-  color: #fff; letter-spacing: -0.5px;
-}
-.sidebar-logo p { font-size: 11px; color: rgba(255,255,255,.7); margin-top: 2px; }
-
-.sidebar-section { padding: 14px 10px 6px; }
-.sidebar-label {
-  font-size: 10px; font-weight: 700; letter-spacing: 1px;
-  text-transform: uppercase; color: var(--text3);
-  padding: 0 8px; margin-bottom: 6px;
-}
-
-.nav-btn {
-  display: flex; align-items: center; gap: 9px;
-  width: 100%; padding: 9px 10px;
-  border: none; background: transparent; cursor: pointer;
-  border-radius: var(--radius); color: var(--text2);
-  font-size: 13px; font-family: inherit; text-align: left;
-  transition: all .15s; font-weight: 400;
-}
-.nav-btn:hover { background: var(--bg); color: var(--text); }
-.nav-btn.active {
-  background: var(--grad-soft);
-  font-weight: 600;
-  color: var(--grad-1);
-}
-.nav-btn svg { flex-shrink: 0; }
-
-.acct-divider { height: 1px; background: var(--border); margin: 6px 10px; }
-
-.acct-item {
-  display: flex; align-items: center; gap: 8px;
-  padding: 7px 10px; border-radius: var(--radius);
-  cursor: pointer; transition: background .15s; margin: 2px 10px;
-}
-.acct-item:hover { background: var(--bg); }
-.acct-item.active { background: var(--bg2); }
-.acct-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-.acct-name { font-size: 13px; flex: 1; color: var(--text); font-weight: 400; }
-.acct-count {
-  font-size: 11px; color: #fff; background: var(--grad);
-  padding: 1px 7px; border-radius: 10px; font-weight: 500;
-}
-
-.sidebar-bottom { margin-top: auto; padding: 12px 10px; border-top: 1px solid var(--border); }
-.btn-add-acct {
-  display: flex; align-items: center; gap: 7px;
-  width: 100%; padding: 9px 12px; border-radius: var(--radius);
-  border: 1.5px dashed var(--border2); background: transparent;
-  cursor: pointer; color: var(--text3); font-size: 12px; font-family: inherit;
-  transition: all .15s;
-}
-.btn-add-acct:hover { border-color: var(--grad-1); color: var(--grad-1); background: var(--bg2); }
-
-/* ── Sync status ── */
-.sync-bar {
-  display: flex; align-items: center; gap: 6px;
-  padding: 6px 12px; margin: 8px 10px;
-  border-radius: var(--radius); font-size: 11px;
-  background: var(--bg);
-}
-.sync-dot {
-  width: 7px; height: 7px; border-radius: 50%;
-  background: #ccc; flex-shrink: 0; transition: background .3s;
-}
-.sync-dot.ok { background: #16A34A; }
-.sync-dot.loading { background: var(--amber); animation: pulse 1s infinite; }
-.sync-dot.error { background: var(--rose); }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-
-/* ── Main ── */
-#main { margin-left: 230px; min-height: 100vh; display: flex; flex-direction: column; }
-
-#topbar {
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  padding: 14px 24px;
-  display: flex; align-items: center; gap: 12px;
-  position: sticky; top: 0; z-index: 50;
-  box-shadow: var(--shadow);
-}
-.topbar-title { font-size: 16px; font-weight: 700; flex: 1; }
-.topbar-acct-badge {
-  display: flex; align-items: center; gap: 6px;
-  padding: 5px 14px; border-radius: 20px;
-  background: var(--grad-soft);
-  border: 1px solid var(--border2);
-  font-size: 12px; font-weight: 600; color: var(--grad-1);
-}
-.btn-primary {
-  padding: 8px 18px; background: var(--grad);
-  color: #fff; border: none; border-radius: var(--radius);
-  font-size: 13px; font-family: inherit; font-weight: 600;
-  cursor: pointer; transition: opacity .15s; white-space: nowrap;
-}
-.btn-primary:hover { opacity: .88; }
-
-#content { padding: 20px 24px; flex: 1; }
-
-/* ── Stats ── */
-.stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 20px; }
-.stat-card {
-  background: var(--surface); border-radius: var(--radius-lg);
-  padding: 14px 16px; border: 1px solid var(--border);
-  box-shadow: var(--shadow); position: relative; overflow: hidden;
-}
-.stat-card::before {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-  background: var(--grad);
-}
-.stat-label { font-size: 11px; color: var(--text3); margin-bottom: 4px; font-weight: 500; }
-.stat-val { font-size: 26px; font-weight: 700; }
-.stat-card.s-total .stat-val  { background: var(--grad); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
-.stat-card.s-posted .stat-val { color: var(--teal); }
-.stat-card.s-week .stat-val   { color: var(--blue); }
-.stat-card.s-over .stat-val   { color: var(--rose); }
-
-/* ── Kanban ── */
-.kanban-wrap { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; align-items: start; }
-.k-col {
-  background: var(--surface2); border-radius: var(--radius-lg);
-  border: 1px solid var(--border); padding: 12px;
-}
-.k-col-head {
-  display: flex; align-items: center; gap: 7px;
-  font-size: 12px; font-weight: 700; margin-bottom: 10px; color: var(--text);
-}
-.k-dot { width: 8px; height: 8px; border-radius: 50%; }
-.k-count {
-  margin-left: auto; background: var(--bg2);
-  padding: 2px 8px; border-radius: 10px;
-  font-size: 11px; font-weight: 500; color: var(--text2);
-}
-
-.k-card {
-  background: var(--surface); border-radius: var(--radius);
-  border: 1px solid var(--border); padding: 0;
-  margin-bottom: 8px; cursor: pointer;
-  transition: box-shadow .15s, border-color .15s;
-  overflow: hidden;
-}
-.k-card:hover { box-shadow: var(--shadow-md); border-color: var(--border2); }
-.k-card-content { padding: 10px 12px; }
-.k-card.is-overdue { border-left: 3px solid var(--rose); }
-.k-card.is-today   { border-left: 3px solid var(--amber); }
-.k-card.is-posted  { opacity: .55; }
-.k-title { font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text); line-height: 1.4; }
-.k-meta  { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
-.k-note  { font-size: 11px; color: var(--text3); margin-top: 5px; }
-
-/* โครงสร้างรูปภาพบนการ์ดคันบัง */
-.k-thumb {
-  width: 100%;
-  height: 120px;
-  object-fit: cover;
-  display: block;
-  border-bottom: 1px solid var(--border);
-}
-
-.ptag { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 6px; letter-spacing: .2px; }
-.date-tag { font-size: 11px; color: var(--text3); display: flex; align-items: center; gap: 3px; }
-
-.k-add {
-  width: 100%; padding: 8px; border: 1.5px dashed var(--border);
-  border-radius: var(--radius); background: transparent;
-  font-size: 12px; color: var(--text3); cursor: pointer; font-family: inherit;
-  transition: all .15s; text-align: left;
-}
-.k-add:hover { background: var(--bg2); border-color: var(--border2); color: var(--grad-1); }
-.k-empty { text-align: center; padding: 16px 8px; font-size: 12px; color: var(--text3); }
-
-/* ── Calendar ── */
-.cal-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-.cal-month-label { font-size: 17px; font-weight: 700; flex: 1; }
-.btn-nav {
-  width: 34px; height: 34px; border-radius: var(--radius);
-  border: 1px solid var(--border); background: var(--surface);
-  cursor: pointer; display: flex; align-items: center; justify-content: center;
-  font-size: 18px; color: var(--text2); transition: all .15s;
-}
-.btn-nav:hover { background: var(--bg2); border-color: var(--border2); }
-
-.cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; }
-.cal-day-name { text-align: center; font-size: 11px; font-weight: 700; color: var(--text3); padding: 6px 0; }
-.cal-cell {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); min-height: 80px; padding: 6px;
-  cursor: pointer; transition: border-color .15s;
-}
-.cal-cell:hover { border-color: var(--grad-1); }
-.cal-cell.other { background: var(--bg2); opacity: .45; cursor: default; }
-.cal-cell.other:hover { border-color: var(--border); }
-.cal-cell.is-today { border: 2px solid var(--grad-1); }
-.cal-num { font-size: 12px; font-weight: 600; color: var(--text3); margin-bottom: 3px; }
-.cal-num.today-n { background: var(--grad); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; font-weight: 800; }
-.cal-dot { font-size: 10px; padding: 1px 5px; border-radius: 4px; margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.5; display: block; }
-.cal-more { font-size: 10px; color: var(--text3); }
-
-.legend { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; padding: 10px 16px; background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); }
-.legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); }
-.legend-dot { width: 9px; height: 9px; border-radius: 3px; }
-
-/* ── Modal ── */
-.modal-overlay {
-  display: none; position: fixed; inset: 0;
-  background: rgba(30,27,75,.4); z-index: 1000;
-  align-items: center; justify-content: center;
-}
-.modal-overlay.open { display: flex; }
-.modal {
-  background: var(--surface); border-radius: var(--radius-lg);
-  padding: 0; width: 380px; max-height: 90vh; overflow-y: auto;
-  box-shadow: var(--shadow-md); border: 1px solid var(--border);
-}
-.modal-header {
-  padding: 18px 22px 16px; background: var(--grad);
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-}
-.modal-header h2 { font-size: 16px; font-weight: 700; color: #fff; }
-.modal-body { padding: 18px 22px; }
-.field { margin-bottom: 13px; }
-.field label { font-size: 12px; font-weight: 600; color: var(--text2); display: block; margin-bottom: 5px; }
-.field input, .field select, .field textarea {
-  width: 100%; padding: 9px 12px; border-radius: var(--radius);
-  border: 1.5px solid var(--border); background: var(--bg);
-  font-size: 13px; font-family: inherit; color: var(--text);
-  transition: border-color .15s; outline: none;
-}
-.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--grad-1); }
-.field textarea { resize: vertical; min-height: 60px; }
-.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.modal-btns { display: flex; gap: 8px; margin-top: 16px; }
-.modal-btns button { flex: 1; padding: 9px 12px; border-radius: var(--radius); font-size: 13px; font-family: inherit; cursor: pointer; font-weight: 600; transition: all .15s; }
-.btn-cancel { background: var(--bg2); border: 1px solid var(--border); color: var(--text2); }
-.btn-cancel:hover { background: var(--bg); }
-.btn-save { background: var(--grad); border: none; color: #fff; }
-.btn-save:hover { opacity: .88; }
-.btn-delete { background: var(--rose-l); border: 1px solid #fca5a5; color: var(--rose); }
-.btn-delete:hover { background: #fecdd3; }
-
-/* สไตล์พรีวิวรูปภายในหน้าต่างเพิ่มงาน */
-.preview-wrap {
-  position: relative; margin-top: 6px; display: none;
-}
-.preview-img {
-  width: 100%; height: 140px; object-fit: cover; border-radius: var(--radius); border: 1px solid var(--border);
-}
-.btn-remove-img {
-  position: absolute; top: 5px; right: 5px; background: rgba(225,29,72,0.9); color: #fff; border: none;
-  border-radius: 50%; width: 24px; height: 24px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center;
-}
-
-.color-grid { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
-.color-swatch { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: transform .12s, border-color .12s; }
-.color-swatch:hover { transform: scale(1.15); }
-.color-swatch.picked { border-color: var(--text); transform: scale(1.1); }
-
-/* ── Loading screen ── */
-#loading {
-  position: fixed; inset: 0; background: var(--bg);
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  z-index: 9999; gap: 16px;
-}
-.loading-logo { font-size: 28px; font-weight: 800; background: var(--grad); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
-.loading-bar { width: 200px; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
-.loading-fill { height: 100%; background: var(--grad); border-radius: 2px; animation: load 1.2s ease-in-out infinite; }
-@keyframes load { 0%{width:0%} 60%{width:80%} 100%{width:100%} }
-.loading-text { font-size: 13px; color: var(--text3); }
-
-/* ── Toast ── */
-#toast {
-  position: fixed; bottom: 20px; right: 20px; z-index: 9999;
-  padding: 10px 18px; border-radius: var(--radius);
-  font-size: 13px; font-weight: 600;
-  transform: translateY(60px); opacity: 0; transition: all .3s;
-  pointer-events: none; box-shadow: var(--shadow-md);
-}
-#toast.show { transform: translateY(0); opacity: 1; }
-#toast.ok { background: var(--grad); color: #fff; }
-#toast.err { background: var(--rose); color: #fff; }
-
-::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
-
-@media (max-width: 768px) {
-  #sidebar { width: 100%; height: auto; position: relative; }
-  #main { margin-left: 0; }
-  .sidebar-logo { padding: 14px 16px; }
-  .stats-grid { grid-template-columns: repeat(2,1fr); }
-  .kanban-wrap { grid-template-columns: 1fr 1fr; }
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ContentFlow - Kanban Board</title>
+    <style>
+        :root {
+            --bg-main: #f4f5f7;
+            --bg-sidebar: linear-gradient(135deg, #4f46e5 0%, #c026d3 100%);
+            --text-light: #ffffff;
+            --text-dark: #1f2937;
+            --card-bg: #ffffff;
+            --border-color: #e5e7eb;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { display: flex; background-color: var(--bg-main); height: 100vh; overflow: hidden; }
+        .sidebar { width: 260px; background: var(--bg-sidebar); color: var(--text-light); padding: 20px; display: flex; flex-direction: column; justify-content: space-between; }
+        .sidebar h2 { font-size: 24px; margin-bottom: 20px; font-weight: bold; }
+        .menu-item { padding: 12px; margin: 8px 0; border-radius: 8px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 10px; }
+        .menu-item:hover, .menu-item.active { background: rgba(255, 255, 255, 0.2); }
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .header { background: #fff; padding: 15px 30px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        .board-container { flex: 1; padding: 20px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; overflow-x: auto; align-items: start; }
+        .column { background: #f1f2f4; border-radius: 12px; padding: 15px; display: flex; flex-direction: column; max-height: 100%; }
+        .column-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: bold; color: var(--text-dark); }
+        .card-list { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; flex: 1; min-height: 50px; }
+        .card { background: var(--card-bg); border-radius: 8px; padding: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer; transition: 0.2s; border-left: 5px solid #4f46e5; }
+        .card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.15); }
+        .card img { width: 100%; border-radius: 6px; margin-top: 8px; object-fit: cover; max-height: 150px; }
+        .card-title { font-weight: 600; font-size: 14px; color: var(--text-dark); margin-bottom: 5px; }
+        .card-meta { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #6b7280; margin-top: 8px; }
+        .badge { padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        .badge.tiktok { background: #fee2e2; color: #ef4444; }
+        .badge.facebook { background: #dbeafe; color: #2563eb; }
+        .btn { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; font-size: 14px; transition: 0.2s; }
+        .btn-primary { background: linear-gradient(135deg, #e11d48 0%, #ca8a04 100%); color: white; }
+        .btn-primary:hover { opacity: 0.9; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: #fff; padding: 30px; border-radius: 12px; width: 450px; max-width: 90%; display: flex; flex-direction: column; gap: 15px; }
+        .form-group { display: flex; flex-direction: column; gap: 5px; }
+        .form-group label { font-size: 12px; font-weight: bold; color: #4b5563; }
+        .form-group input, .form-group select, .form-group textarea { padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; width: 100%; }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+        #status-bar { font-size: 12px; color: rgba(255,255,255,0.7); display: flex; align-items: center; gap: 6px; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+        .status-dot.ok { background: #10b981; box-shadow: 0 0 8px #10b981; }
+        .status-dot.loading { background: #f59e0b; animation: pulse 1s infinite alternate; }
+        .status-dot.error { background: #ef4444; }
+        @keyframes pulse { from { opacity: 0.5; } to { opacity: 1; } }
+        #loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f4f5f7; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
+        .loader-bar { width: 200px; height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden; margin-top: 20px; }
+        .loader-progress { width: 50%; height: 100%; background: linear-gradient(90deg, #4f46e5, #c026d3); animation: loading 1.5s infinite ease-in-out; }
+        @keyframes loading { 0% { transform: translateX(-100%); } 100% { transform: translateX(200%); } }
+    </style>
 </head>
 <body>
 
-<div id="loading">
-  <div class="loading-logo">ContentFlow</div>
-  <div class="loading-bar"><div class="loading-fill"></div></div>
-  <div class="loading-text">กำลังโหลดข้อมูลจาก Google Sheets...</div>
-</div>
-
-<div id="sidebar" style="display:none">
-  <div class="sidebar-logo">
-    <h1>ContentFlow</h1>
-    <p>sync กับ Google Sheets</p>
-  </div>
-
-  <div class="sidebar-section">
-    <div class="sidebar-label">มุมมอง</div>
-    <button class="nav-btn active" id="nav-kanban" onclick="switchView('kanban')">
-      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="12" rx="1"/><rect x="17" y="3" width="5" height="15" rx="1"/></svg>
-      Kanban Board
-    </button>
-    <button class="nav-btn" id="nav-calendar" onclick="switchView('calendar')">
-      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-      ปฏิทินรายเดือน
-    </button>
-  </div>
-
-  <div class="acct-divider"></div>
-
-  <div class="sidebar-section">
-    <div class="sidebar-label">บัญชีของฉัน</div>
-    <div id="acct-list"></div>
-  </div>
-
-  <div class="sidebar-bottom">
-    <div class="sync-bar">
-      <div class="sync-dot" id="sync-dot"></div>
-      <span id="sync-text" style="color:var(--text3)">กำลังเชื่อมต่อ...</span>
+    <div id="loading-screen">
+        <h1 style="font-size: 36px; font-weight: bold; background: linear-gradient(45deg, #4f46e5, #e11d48); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">ContentFlow</h1>
+        <div class="loader-bar"><div class="loader-progress"></div></div>
+        <p style="margin-top: 15px; color: #6b7280; font-size: 14px;">กำลังโหลดข้อมูลจาก Google Sheets...</p>
     </div>
-    <button class="btn-add-acct" onclick="openAddAcct()">
-      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-      เพิ่มบัญชีใหม่
-    </button>
-  </div>
-</div>
 
-<div id="main" style="display:none">
-  <div id="topbar">
-    <div class="topbar-title grad-text" id="topbar-title">Kanban Board</div>
-    <div class="topbar-acct-badge">
-      <span id="badge-dot" style="width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0"></span>
-      <span id="badge-name"></span>
-    </div>
-    <button class="btn-primary" onclick="openAdd('')">+ เพิ่มงาน</button>
-  </div>
-  <div id="content">
-    <div class="stats-grid" id="stats"></div>
-    <div id="view"></div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="modal-card">
-  <div class="modal" onclick="event.stopPropagation()">
-    <div class="modal-header"><h2 id="modal-card-title">เพิ่มงานใหม่</h2></div>
-    <div class="modal-body">
-      <div class="field"><label>ชื่องาน / หัวข้อ</label><input id="f-title" placeholder="เช่น รีวิวร้านอาหารญี่ปุ่น..."></div>
-      <div class="field-row">
-        <div class="field"><label>แพลตฟอร์ม</label>
-          <select id="f-plat"><option>Instagram</option><option>YouTube</option><option>TikTok</option><option>Facebook</option><option>Twitter/X</option><option>LINE</option></select>
+    <div class="sidebar">
+        <div>
+            <h2>ContentFlow</h2>
+            <div id="status-bar"><span id="status-dot" class="status-dot loading"></span><span id="status-text">กำลังเชื่อมต่อ...</span></div>
+            <hr style="margin: 20px 0; border: none; border-top: 1px solid rgba(255,255,255,0.2);">
+            <div class="menu-item active">📋 Kanban Board</div>
         </div>
-        <div class="field"><label>สถานะ</label>
-          <select id="f-status"><option value="idea">ไอเดีย</option><option value="draft">กำลังทำ</option><option value="scheduled">รอลงงาน</option><option value="posted">ลงแล้ว</option></select>
-        </div>
-      </div>
-      <div class="field"><label>วันที่ลงงาน</label><input type="date" id="f-date"></div>
-      
-      <div class="field">
-        <label>รูปภาพแนบงาน</label>
-        <input type="file" id="f-image" accept="image/*" onchange="previewFile()">
-        <div class="preview-wrap" id="preview-wrap">
-          <img src="" class="preview-img" id="img-render">
-          <button class="btn-remove-img" onclick="removeImage()">×</button>
-        </div>
-      </div>
-
-      <div class="field"><label>โน้ต</label><textarea id="f-note" placeholder="Reel 30 วิ, Carousel 8 รูป..."></textarea></div>
-      <div class="modal-btns" id="card-btns"></div>
-    </div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="modal-acct" onclick="closeAcctModal()">
-  <div class="modal" onclick="event.stopPropagation()">
-    <div class="modal-header"><h2>เพิ่มบัญชีใหม่</h2></div>
-    <div class="modal-body">
-      <div class="field"><label>ชื่อบัญชี</label><input id="a-name" placeholder="เช่น IG Personal, YouTube Channel..."></div>
-      <div class="field"><label>เลือกสี</label><div class="color-grid" id="color-grid"></div></div>
-      <div class="modal-btns">
-        <button class="btn-cancel" onclick="closeAcctModal()">ยกเลิก</button>
-        <button class="btn-save" onclick="saveAcct()">บันทึก</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div id="toast"></div>
-
-<script>
-const API = "https://script.google.com/macros/s/AKfycbx308F1MnmiEOb1oGA-IRxLJHdvwUKN42eYvvWFdM4GsxGIwM2NRj5e22qiRDhsI8HMKA/exec";
-
-const PC = {
-  Instagram:  { bg:'#fce8f3', text:'#7b1d5c', dot:'#D4537E' },
-  YouTube:    { bg:'#feecec', text:'#7a1111', dot:'#E24B4A' },
-  TikTok:     { bg:'#e8fef5', text:'#0b5e46', dot:'#1D9E75' },
-  Facebook:   { bg:'#e8effe', text:'#1a2f8a', dot:'#378ADD' },
-  'Twitter/X':{ bg:'#e6f3fe', text:'#0c3d7a', dot:'#5B9CF6' },
-  LINE:       { bg:'#e8fee9', text:'#1a6b1c', dot:'#5BBD6E' },
-};
-const ACCT_COLORS = ['#7C3AED','#C2410C','#DC2626','#9333EA','#EA580C','#B91C1C','#6D28D9','#0D9488'];
-const STATUSES = [
-  {id:'idea',     label:'ไอเดีย',   color:'#7C3AED'},
-  {id:'draft',    label:'กำลังทำ',  color:'#D97706'},
-  {id:'scheduled',label:'รอลงงาน',  color:'#2563EB'},
-  {id:'posted',   label:'ลงแล้ว',   color:'#16A34A'},
-];
-const MONTHS_TH = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
-const DAYS_TH = ['อา','จ','อ','พ','พฤ','ศ','ส'];
-
-let state = {
-  accounts: [{ id:'a1', name:'Main Account', color:'#7C3AED' }],
-  cards: [], nextCardId: 1, nextAcctId: 2,
-  activeAcct: 'a1', view: 'kanban',
-  calYear: new Date().getFullYear(), calMonth: new Date().getMonth(),
-};
-let editCardId = null, pickedColor = ACCT_COLORS[0], syncing = false;
-let currentImageData = ""; // ตัวแปรเก็บรหัสรูปภาพชั่วคราวชั่วขณะ
-
-/* ── API ── */
-async function fetchData() {
-  setSyncStatus('loading', 'กำลังโหลด...');
-  try {
-    const r = await fetch(API + '?action=getAll');
-    const d = await r.json();
-    if (d.cards) {
-      state.cards    = d.cards    || [];
-      state.accounts = d.accounts || state.accounts;
-      if (d.nextCardId)  state.nextCardId  = d.nextCardId;
-      if (d.nextAcctId)  state.nextAcctId  = d.nextAcctId;
-    }
-    setSyncStatus('ok', 'ซิงค์แล้ว ' + timeNow());
-  } catch(e) {
-    setSyncStatus('error', 'เชื่อมต่อไม่ได้');
-  }
-}
-  
-async function pushData() {
-  setSyncStatus('loading', 'กำลังบันทึกข้อมูล...');
-  const payload = {
-    action: 'save',
-    cards: state.cards,
-    accounts: state.accounts,
-    nextCardId: state.nextCardId,
-    nextAcctId: state.nextAcctId
-  };
-  try {
-    const response = await fetch(API, {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
-    const result = await response.json();
-    if (result.success) {
-      setSyncStatus('ok', 'ซิงค์ข้อมูลสำเร็จ ' + timeNow());
-    } else {
-      throw new Error(result.error || 'Save failed');
-    }
-  } catch (error) {
-    console.error("Sync Error:", error);
-    setSyncStatus('error', 'เชื่อมต่อไม่ได้');
-  }
-}
-
-    setSyncStatus('ok', 'บันทึกแล้ว ' + timeNow());
-    showToast('✓ บันทึกแล้ว', 'ok');
-  } catch(e) {
-    setSyncStatus('error', 'บันทึกไม่สำเร็จ');
-    showToast('บันทึกไม่สำเร็จ — ลองใหม่', 'err');
-  }
-  syncing = false;
-}
-
-function setSyncStatus(state, text) {
-  const dot  = document.getElementById('sync-dot');
-  const span = document.getElementById('sync-text');
-  dot.className = 'sync-dot ' + state;
-  span.textContent = text;
-}
-
-function timeNow() {
-  const n = new Date();
-  return n.getHours() + ':' + String(n.getMinutes()).padStart(2,'0');
-}
-
-function showToast(msg, type) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.className = 'show ' + type;
-  setTimeout(() => t.className = '', 2500);
-}
-
-/* ── Helpers ── */
-function today()  { return new Date().toISOString().split('T')[0]; }
-function fmt(d)   { if(!d) return ''; const[y,m,dd]=d.split('-'); return `${dd}/${m}`; }
-function acct()   { return state.accounts.find(a=>a.id===state.activeAcct); }
-function filtered(){ return state.cards.filter(c=>c.acctId===state.activeAcct); }
-function byStatus(s){ return filtered().filter(c=>c.status===s).sort((a,b)=>(a.date||'9')>(b.date||'9')?1:-1); }
-
-function cardCls(c) {
-  if (c.status==='posted') return 'k-card is-posted';
-  if (c.date && c.date < today()) return 'k-card is-overdue';
-  if (c.date && c.date === today()) return 'k-card is-today';
-  return 'k-card';
-}
-
-/* ── ฟังก์ชันจัดการรูปภาพพรีวิวในหน้า Modal ── */
-function previewFile() {
-  const file = document.getElementById('f-image').files[0];
-  const reader = new FileReader();
-  reader.addEventListener("load", function () {
-    currentImageData = reader.result;
-    document.getElementById('img-render').src = reader.result;
-    document.getElementById('preview-wrap').style.display = 'block';
-  }, false);
-  if (file) { reader.readAsDataURL(file); }
-}
-
-function removeImage() {
-  document.getElementById('f-image').value = "";
-  currentImageData = "";
-  document.getElementById('img-render').src = "";
-  document.getElementById('preview-wrap').style.display = 'none';
-}
-
-/* ── Render ── */
-function render() {
-  renderSidebar(); renderTopbar(); renderStats();
-  if (state.view==='kanban') renderKanban(); else renderCalendar();
-}
-
-function renderSidebar() {
-  document.getElementById('acct-list').innerHTML = state.accounts.map(a=>`
-    <div class="acct-item ${a.id===state.activeAcct?'active':''}" onclick="switchAcct('${a.id}')">
-      <div class="acct-dot" style="background:${a.color}"></div>
-      <span class="acct-name">${a.name}</span>
-      <span class="acct-count">${state.cards.filter(c=>c.acctId===a.id).length}</span>
-    </div>`).join('');
-  document.getElementById('nav-kanban').className  = 'nav-btn'+(state.view==='kanban' ?' active':'');
-  document.getElementById('nav-calendar').className = 'nav-btn'+(state.view==='calendar'?' active':'');
-}
-
-function renderTopbar() {
-  const a = acct();
-  document.getElementById('topbar-title').textContent = state.view==='kanban' ? 'Kanban Board' : 'ปฏิทินรายเดือน';
-  document.getElementById('badge-dot').style.background = a ? a.color : '#999';
-  document.getElementById('badge-name').textContent = a ? a.name : '';
-}
-
-function renderStats() {
-  const fc = filtered();
-  const posted = fc.filter(c=>c.status==='posted').length;
-  const td = today();
-  const week = fc.filter(c=>c.status!=='posted'&&c.date&&c.date>=td&&c.date<=new Date(Date.now()+7*864e5).toISOString().split('T')[0]).length;
-  const over = fc.filter(c=>c.status!=='posted'&&c.date&&c.date<td).length;
-  document.getElementById('stats').innerHTML = `
-    <div class="stat-card s-total"><div class="stat-label">งานทั้งหมด</div><div class="stat-val">${fc.length}</div></div>
-    <div class="stat-card s-posted"><div class="stat-label">ลงแล้ว</div><div class="stat-val">${posted}</div></div>
-    <div class="stat-card s-week"><div class="stat-label">ใน 7 วัน</div><div class="stat-val">${week}</div></div>
-    <div class="stat-card s-over"><div class="stat-label">เกินกำหนด</div><div class="stat-val">${over}</div></div>`;
-}
-
-function renderKanban() {
-  document.getElementById('view').innerHTML = `<div class="kanban-wrap" id="board"></div>`;
-  const board = document.getElementById('board');
-  STATUSES.forEach(col => {
-    const cards = byStatus(col.id);
-    const el = document.createElement('div');
-    el.className = 'k-col';
-    el.innerHTML = `
-      <div class="k-col-head">
-        <div class="k-dot" style="background:${col.color}"></div>${col.label}
-        <span class="k-count">${cards.length}</span>
-      </div>
-      ${cards.length===0 ? `<div class="k-empty">ยังไม่มีงาน</div>` : ''}
-      ${cards.map(c => {
-        const p = PC[c.platform]||{bg:'#eee',text:'#555'};
-        return `<div class="${cardCls(c)}" onclick="openEdit(${c.id})">
-          ${c.image ? `<img src="${c.image}" class="k-thumb">` : ''}
-          <div class="k-card-content">
-            <div class="k-title">${c.title}</div>
-            <div class="k-meta">
-              <span class="ptag" style="background:${p.bg};color:${p.text}">${c.platform}</span>
-              ${c.date?`<span class="date-tag">📅 ${fmt(c.date)}</span>`:''}
+        <div>
+            <div id="account-section">
+                <label style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.6);">บัญชีของคุณ</label>
+                <div id="account-list" style="margin-top: 10px; display: flex; flex-direction: column; gap: 5px;"></div>
+                <button class="btn" style="width: 100%; background: rgba(255,255,255,0.1); color: white; margin-top: 10px; font-size: 12px;" onclick="promptNewAccount()">+ เพิ่มบัญชีใหม่</button>
             </div>
-            ${c.note?`<div class="k-note">${c.note}</div>`:''}
-          </div>
-        </div>`;
-      }).join('')}
-      <button class="k-add" onclick="openAdd('${col.id}')">+ เพิ่มงาน</button>`;
-    board.appendChild(el);
-  });
-}
-
-function renderCalendar() {
-  const y=state.calYear, m=state.calMonth;
-  const first=new Date(y,m,1).getDay(), days=new Date(y,m+1,0).getDate();
-  const td=today(), fc=filtered();
-  const total=Math.ceil((first+days)/7)*7;
-  let cells='';
-  for(let i=0;i<total;i++){
-    const dn=i-first+1, inM=dn>=1&&dn<=days;
-    const ds=inM?`${y}-${String(m+1).padStart(2,'0')}-${String(dn).padStart(2,'0')}`:'';
-    const dc=ds?fc.filter(c=>c.date===ds):[];
-    const isT=ds===td;
-    cells+=`<div class="cal-cell ${!inM?'other':''} ${isT?'is-today':''}" ${inM&&ds?`onclick="calClick('${ds}')"`:''}">
-      ${inM?`<div class="cal-num ${isT?'today-n':''}">${dn}</div>`:''}
-      ${dc.slice(0,2).map(c=>{const p=PC[c.platform]||{bg:'#eee',text:'#555'};return`<span class="cal-dot" style="background:${p.bg};color:${p.text}">${c.title}</span>`;}).join('')}
-      ${dc.length>2?`<div class="cal-more">+${dc.length-2} อื่นๆ</div>`:''}
-    </div>`;
-  }
-  document.getElementById('view').innerHTML=`
-    <div class="cal-header">
-      <button class="btn-nav" onclick="calNav(-1)">‹</button>
-      <div class="cal-month-label grad-text">${MONTHS_TH[m]} ${y+543}</div>
-      <button class="btn-nav" onclick="calNav(1)">›</button>
+        </div>
     </div>
-    <div class="cal-grid">
-      ${DAYS_TH.map(d=>`<div class="cal-day-name">${d}</div>`).join('')}${cells}
+
+    <div class="main-content">
+        <div class="header">
+            <h3 id="current-board-title" style="font-size: 20px; color: var(--text-dark);">Kanban Board</h3>
+            <button class="btn btn-primary" onclick="openCardModal()">+ เพิ่มงาน</button>
+        </div>
+        <div class="board-container">
+            <div class="column" id="col-idea"><div class="column-header">💡 ไอเดีย <span class="count" id="count-idea">0</span></div><div class="card-list" id="list-idea" ondragover="allowDrop(event)" ondrop="drop(event, 'idea')"></div></div>
+            <div class="column" id="col-doing"><div class="column-header">🚧 กำลังทำ <span class="count" id="count-doing">0</span></div><div class="card-list" id="list-doing" ondragover="allowDrop(event)" ondrop="drop(event, 'doing')"></div></div>
+            <div class="column" id="col-review"><div class="column-header">👀 รอตรวจงาน <span class="count" id="count-review">0</span></div><div class="card-list" id="list-review" ondragover="allowDrop(event)" ondrop="drop(event, 'review')"></div></div>
+            <div class="column" id="col-done"><div class="column-header">✅ ลงแล้ว <span class="count" id="count-done">0</span></div><div class="card-list" id="list-done" ondragover="allowDrop(event)" ondrop="drop(event, 'done')"></div></div>
+        </div>
     </div>
-    <div class="legend">
-      ${Object.entries(PC).map(([p,c])=>`<div class="legend-item"><div class="legend-dot" style="background:${c.dot}"></div>${p}</div>`).join('')}
-    </div>`;
-}
 
-function calNav(d){
-  state.calMonth+=d;
-  if(state.calMonth<0){state.calMonth=11;state.calYear--;}
-  if(state.calMonth>11){state.calMonth=0;state.calYear++;}
-  renderCalendar();
-}
-function calClick(ds){ openAdd('scheduled',ds); }
-function switchView(v){ state.view=v; render(); }
-function switchAcct(id){ state.activeAcct=id; render(); }
+    <div class="modal" id="card-modal">
+        <div class="modal-content">
+            <h3 id="modal-title" style="color: var(--text-dark);">เพิ่มงานใหม่</h3>
+            <div class="form-group"><label>ชื่องาน / หัวข้อ</label><input type="text" id="f-title" placeholder="เช่น รีวิวคอนโดสาย 5"></div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group"><label>แพลตฟอร์ม</label><select id="f-plat"><option value="TikTok">TikTok</option><option value="Facebook">Facebook</option><option value="Instagram">Instagram</option></select></div>
+                <div class="form-group"><label>สถานะ</label><select id="f-status"><option value="idea">ไอเดีย</option><option value="doing">กำลังทำ</option><option value="review">รอตรวจงาน</option><option value="done">ลงแล้ว</option></select></div>
+            </div>
+            <div class="form-group"><label>วันที่ลงงาน</label><input type="date" id="f-date"></div>
+            <div class="form-group">
+                <label>รูปภาพแนบงาน</label>
+                <input type="file" id="f-image" accept="image/*" onchange="previewFile()">
+                <div id="preview-wrap" style="display:none; margin-top:10px; position:relative;">
+                    <img id="img-render" src="" style="width:100%; max-height:150px; object-fit:cover; border-radius:6px;">
+                    <button style="position:absolute; top:5px; right:5px; background:rgba(0,0,0,0.6); color:white; border:none; border-radius:50%; width:24px; height:24px; cursor:pointer;" onclick="removeImage()">×</button>
+                </div>
+            </div>
+            <div class="form-group"><label>โน้ตเพิ่มเติม</label><textarea id="f-note" rows="3" placeholder="ใส่รายละเอียดงาน..."></textarea></div>
+            <div class="modal-footer">
+                <button class="btn" style="background:#f3f4f6; color:#374151;" onclick="closeCardModal()">ยกเลิก</button>
+                <button class="btn btn-primary" onclick="saveCard()">บันทึก</button>
+            </div>
+        </div>
+    </div>
 
-/* ── Card Modal ── */
-function openAdd(status,date=''){
-  editCardId=null;
-  removeImage(); // รีเซ็ตล้างรูปภาพเดิมค้างเก่าออก
-  document.getElementById('modal-card-title').textContent='เพิ่มงานใหม่';
-  document.getElementById('f-title').value='';
-  document.getElementById('f-plat').value='Instagram';
-  document.getElementById('f-status').value=status||'idea';
-  document.getElementById('f-date').value=date;
-  document.getElementById('f-note').value='';
-  document.getElementById('card-btns').innerHTML=`
-    <button class="btn-cancel" onclick="closeCardModal()">ยกเลิก</button>
-    <button class="btn-save" onclick="saveCard()">บันทึก</button>`;
-  document.getElementById('modal-card').classList.add('open');
-}
-function openEdit(id){
-  const c=state.cards.find(x=>x.id===id); editCardId=id;
-  removeImage(); // รีเซ็ตสถานะรูปภาพพรีวิวก่อนดึงค่าใหม่
-  document.getElementById('modal-card-title').textContent='แก้ไขงาน';
-  document.getElementById('f-title').value=c.title;
-  document.getElementById('f-plat').value=c.platform;
-  document.getElementById('f-status').value=c.status;
-  document.getElementById('f-date').value=c.date||'';
-  document.getElementById('f-note').value=c.note||'';
-  
-  // โหลดรูปภาพเดิมที่มีขึ้นพรีวิวถ้าพบข้อมูล
-  if (c.image) {
-    currentImageData = c.image;
-    document.getElementById('img-render').src = c.image;
-    document.getElementById('preview-wrap').style.display = 'block';
-  }
-  
-  document.getElementById('card-btns').innerHTML=`
-    <button class="btn-delete" onclick="deleteCard(${id})">ลบ</button>
-    <button class="btn-cancel" onclick="closeCardModal()">ยกเลิก</button>
-    <button class="btn-save" onclick="saveCard()">บันทึก</button>`;
-  document.getElementById('modal-card').classList.add('open');
-}
-function closeCardModal(){ document.getElementById('modal-card').classList.remove('open'); }
-document.getElementById('modal-card').addEventListener('click',function(e){if(e.target===this)closeCardModal();});
+    <script>
+        // 🔍 ใส่ ID ของ Web App ของคุณตรงนี้
+        const API = "https://script.google.com/macros/s/1xNb_jQFY-zLp2X05mQay4pbdQA9MUIBV9YKr5SAU1ps/exec"; 
 
-function saveCard(){
-  const title=document.getElementById('f-title').value.trim();
-  if(!title){alert('กรุณาใส่ชื่องาน');return;}
-  const obj={
-    id:editCardId||state.nextCardId++,
-    title,
-    platform:document.getElementById('f-plat').value,
-    status:document.getElementById('f-status').value,
-    date:document.getElementById('f-date').value,
-    image:currentImageData, // บันทึกข้อมูลรูปภาพลงในอ็อบเจกต์การ์ด
-    note:document.getElementById('f-note').value.trim(),
-    acctId:state.activeAcct,
-  };
-  if(editCardId) state.cards=state.cards.map(c=>c.id===editCardId?obj:c);
-  else state.cards.push(obj);
-  closeCardModal(); render(); pushData();
-}
-function deleteCard(id){
-  if(!confirm('ลบงานนี้?'))return;
-  state.cards=state.cards.filter(c=>c.id!==id);
-  closeCardModal(); render(); pushData();
-}
+        let state = { cards: [], accounts: [], nextCardId: 1, nextAcctId: 1, activeAcct: null };
+        let editCardId = null;
+        let currentImageData = "";
 
-/* ── Account Modal ── */
-function openAddAcct(){
-  document.getElementById('a-name').value='';
-  pickedColor=ACCT_COLORS[0];
-  renderColorGrid();
-  document.getElementById('modal-acct').classList.add('open');
-}
-function closeAcctModal(){ document.getElementById('modal-acct').classList.remove('open'); }
+        window.onload = async () => {
+            await loadData();
+            document.getElementById('loading-screen').style.display = 'none';
+        };
 
-function renderColorGrid(){
-  document.getElementById('color-grid').innerHTML=ACCT_COLORS.map(c=>
-    `<div class="color-swatch ${c===pickedColor?'picked':''}" style="background:${c}" onclick="pickColor('${c}')"></div>`
-  ).join('');
-}
-function pickColor(c){ pickedColor=c; renderColorGrid(); }
+        function setSyncStatus(type, text) {
+            const dot = document.getElementById('status-dot');
+            const txt = document.getElementById('status-text');
+            dot.className = 'status-dot ' + type;
+            txt.innerText = text;
+        }
 
-function saveAcct(){
-  const name=document.getElementById('a-name').value.trim();
-  if(!name){alert('กรุณาใส่ชื่อบัญชี');return;}
-  const id='a'+state.nextAcctId++;
-  state.accounts.push({id,name,color:pickedColor});
-  state.activeAcct=id;
-  closeAcctModal(); render(); pushData();
-}
+        function timeNow() { return new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}); }
 
-/* ── Init ── */
-async function init(){
-  await fetchData();
-  document.getElementById('loading').style.display='none';
-  document.getElementById('sidebar').style.display='flex';
-  document.getElementById('main').style.display='flex';
-  if(!state.activeAcct && state.accounts.length) state.activeAcct=state.accounts[0].id;
-  render();
-  setInterval(async()=>{
-    if(!syncing){ await fetchData(); render(); }
-  }, 30000);
-}
+        async function loadData() {
+            setSyncStatus('loading', 'กำลังโหลดข้อมูล...');
+            try {
+                const res = await fetch(`${API}?action=getAll`);
+                const data = await res.json();
+                state.cards = data.cards || [];
+                state.accounts = data.accounts || [];
+                state.nextCardId = data.nextCardId || 1;
+                state.nextAcctId = data.nextAcctId || 1;
+                
+                if (state.accounts.length === 0) {
+                    state.accounts.push({ id: 1, name: 'Main Account' });
+                    state.nextAcctId = 2;
+                }
+                state.activeAcct = state.accounts[0].id;
+                
+                render();
+                setSyncStatus('ok', 'เชื่อมต่อสำเร็จ ' + timeNow());
+            } catch (e) {
+                console.error(e);
+                setSyncStatus('error', 'เชื่อมต่อไม่ได้');
+                // หากดึงไม่ได้ ให้เปิดสิทธิ์โหมดออฟไลน์ใช้งานก่อนได้เพื่อไม่ให้หน้าค้าง
+                if(state.accounts.length === 0) state.accounts.push({ id: 1, name: 'Main Account' });
+                state.activeAcct = 1;
+                render();
+            }
+        }
 
-init();
-</script>
+        async function pushData() {
+            setSyncStatus('loading', 'กำลังบันทึกข้อมูล...');
+            const payload = {
+                action: 'save',
+                cards: state.cards,
+                accounts: state.accounts,
+                nextCardId: state.nextCardId,
+                nextAcctId: state.nextAcctId
+            };
+            try {
+                const response = await fetch(API, {
+                    method: "POST",
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                if (result.success) {
+                    setSyncStatus('ok', 'ซิงค์ข้อมูลสำเร็จ ' + timeNow());
+                } else {
+                    throw new Error(result.error || 'Save failed');
+                }
+            } catch (error) {
+                console.error("Sync Error:", error);
+                setSyncStatus('error', 'เชื่อมต่อไม่ได้');
+            }
+        }
+
+        async function previewFile() {
+            const file = document.getElementById('f-image').files[0];
+            if (!file) return;
+            setSyncStatus('loading', 'กำลังอัปโหลดรูปภาพ...');
+            const reader = new FileReader();
+            reader.addEventListener("load", async function () {
+                try {
+                    const response = await fetch(API, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            action: 'uploadImage',
+                            base64Data: reader.result,
+                            fileName: file.name
+                        })
+                    });
+                    const resData = await response.json();
+                    if (resData.success && resData.url) {
+                        currentImageData = resData.url;
+                        document.getElementById('img-render').src = resData.url;
+                        document.getElementById('preview-wrap').style.display = 'block';
+                        setSyncStatus('ok', 'อัปโหลดรูปสำเร็จ ' + timeNow());
+                    }
+                } catch (e) {
+                    setSyncStatus('error', 'อัปโหลดรูปไม่สำเร็จ');
+                }
+            }, false);
+            reader.readAsDataURL(file);
+        }
+
+        function removeImage() {
+            document.getElementById('f-image').value = "";
+            currentImageData = "";
+            document.getElementById('img-render').src = "";
+            document.getElementById('preview-wrap').style.display = 'none';
+        }
+
+        function render() {
+            renderAccounts();
+            renderCards();
+        }
+
+        function renderAccounts() {
+            const list = document.getElementById('account-list');
+            list.innerHTML = "";
+            state.accounts.forEach(a => {
+                const count = state.cards.filter(c => c.acctId === a.id).length;
+                const div = document.createElement('div');
+                div.className = `menu-item ${state.activeAcct === a.id ? 'active' : ''}`;
+                div.innerHTML = `👤 ${a.name} <span style="margin-left:auto; background:rgba(255,255,255,0.3); padding:2px 6px; border-radius:10px; font-size:10px;">${count}</span>`;
+                div.onclick = () => { state.activeAcct = a.id; render(); };
+                list.appendChild(div);
+            });
+            const activeObj = state.accounts.find(a => a.id === state.activeAcct);
+            document.getElementById('current-board-title').innerText = activeObj ? `บอร์ดงาน: ${activeObj.name}` : 'Kanban Board';
+        }
+
+        function renderCards() {
+            const columns = ['idea', 'doing', 'review', 'done'];
+            columns.forEach(col => {
+                const list = document.getElementById(`list-${col}`);
+                list.innerHTML = "";
+                const filtered = state.cards.filter(c => c.status === col && c.acctId === state.activeAcct);
+                document.getElementById(`count-${col}`).innerText = filtered.length;
+                
+                filtered.forEach(c => {
+                    const div = document.createElement('div');
+                    div.className = 'card';
+                    div.draggable = true;
+                    div.ondragstart = (e) => e.dataTransfer.setData("text/plain", c.id);
+                    div.onclick = () => openCardModal(c.id);
+                    
+                    let imgHtml = c.image ? `<img src="${c.image}" alt="preview">` : '';
+                    div.innerHTML = `
+                        <div class="card-title">${c.title}</div>
+                        ${imgHtml}
+                        <div class="card-meta">
+                            <span class="badge ${c.platform.toLowerCase()}">${c.platform}</span>
+                            <span>${c.date || '-'}</span>
+                        </div>
+                    `;
+                    list.appendChild(div);
+                });
+            });
+        }
+
+        function openCardModal(id = null) {
+            editCardId = id;
+            const modal = document.getElementById('card-modal');
+            modal.style.display = 'flex';
+            if (id) {
+                document.getElementById('modal-title').innerText = "แก้ไขงาน";
+                const c = state.cards.find(card => card.id === id);
+                document.getElementById('f-title').value = c.title;
+                document.getElementById('f-plat').value = c.platform;
+                document.getElementById('f-status').value = c.status;
+                document.getElementById('f-date').value = c.date;
+                document.getElementById('f-note').value = c.note || "";
+                if (c.image) {
+                    currentImageData = c.image;
+                    document.getElementById('img-render').src = c.image;
+                    document.getElementById('preview-wrap').style.display = 'block';
+                } else { removeImage(); }
+            } else {
+                document.getElementById('modal-title').innerText = "เพิ่มงานใหม่";
+                document.getElementById('f-title').value = "";
+                document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+                document.getElementById('f-note').value = "";
+                removeImage();
+            }
+        }
+
+        function closeCardModal() { document.getElementById('card-modal').style.display = 'none'; }
+
+        function saveCard() {
+            const title = document.getElementById('f-title').value.trim();
+            if (!title) { alert('กรุณาระบุชื่องาน'); return; }
+            const obj = {
+                id: editCardId || state.nextCardId++,
+                title,
+                platform: document.getElementById('f-plat').value,
+                status: document.getElementById('f-status').value,
+                date: document.getElementById('f-date').value,
+                image: currentImageData,
+                note: document.getElementById('f-note').value.trim(),
+                acctId: state.activeAcct
+            };
+            if (editCardId) state.cards = state.cards.map(c => c.id === editCardId ? obj : c);
+            else state.cards.push(obj);
+            closeCardModal(); render(); pushData();
+        }
+
+        function promptNewAccount() {
+            const name = prompt("ระบุชื่อบัญชีใหม่:");
+            if (name && name.trim()) {
+                const newAcct = { id: state.nextAcctId++, name: name.trim() };
+                state.accounts.push(newAcct);
+                state.activeAcct = newAcct.id;
+                render(); pushData();
+            }
+        }
+
+        function allowDrop(e) { e.preventDefault(); }
+        function drop(e, col) {
+            e.preventDefault();
+            const id = parseInt(e.dataTransfer.getData("text/plain"));
+            state.cards = state.cards.map(c => c.id === id ? { ...c, status: col } : c);
+            render(); pushData();
+        }
+    </script>
 </body>
 </html>
-
