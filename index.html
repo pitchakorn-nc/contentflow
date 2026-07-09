@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Schedule Flow</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #f8fafc;
+            --sidebar-color: #ffffff;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --accent: #e11d48;
+            --accent-hover: #be185d;
+            --border: #e2e8f0;
+            --card-bg: #ffffff;
+            --soft: #f1f5f9;
+            --shadow: 0 18px 45px rgba(15, 23, 42, 0.10);
+            --sidebar-width: 280px;
+            --radius-lg: 18px;
+            --radius-md: 12px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Sarabun', sans-serif; }
+        html { height: 100%; }
+        body {
+            display: flex;
+            background-color: var(--bg-main);
+            height: 100vh;
+            overflow: hidden;
+            color: var(--text-dark);
+            -webkit-font-smoothing: antialiased;
+        }
+        button, input, select, textarea { font: inherit; }
+        button { -webkit-tap-highlight-color: transparent; }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            flex: 0 0 var(--sidebar-width);
+            background: var(--sidebar-color);
+            border-right: 1px solid var(--border);
+            padding: 22px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: margin-left 0.28s ease, transform 0.28s ease;
+            z-index: 900;
+        }
+        body.sidebar-closed .sidebar { margin-left: calc(var(--sidebar-width) * -1); }
+
+        .sidebar-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+        .logo-area h2 { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 2px; letter-spacing: -0.5px; }
+        .logo-area p { font-size: 12px; color: var(--text-muted); margin-bottom: 22px; }
+        .sidebar-content { min-height: 0; overflow-y: auto; padding-right: 2px; }
+
+        .icon-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: #fff;
+            color: var(--text-dark);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: 0.2s;
+        }
+        .icon-btn:hover { background: var(--soft); }
+        .icon-btn:focus-visible, .btn:focus-visible, .menu-item:focus-visible, .section-toggle:focus-visible {
+            outline: 3px solid rgba(99, 102, 241, 0.18);
+            outline-offset: 2px;
+        }
+
+        .nav-group { margin-bottom: 18px; }
+        .section-toggle {
+            width: 100%;
+            border: 0;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 8px 2px;
+            color: var(--text-muted);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .section-toggle .chevron { transition: transform 0.2s ease; font-size: 13px; }
+        .nav-group.collapsed .section-toggle .chevron { transform: rotate(-90deg); }
+        .section-body {
+            max-height: 520px;
+            overflow: hidden;
+            transition: max-height 0.28s ease, opacity 0.2s ease;
+        }
+        .nav-group.collapsed .section-body { max-height: 0; opacity: 0; pointer-events: none; }
+
+        .menu-item {
+            width: 100%;
+            padding: 11px 14px;
+            margin: 5px 0;
+            border-radius: 10px;
+            border: 0;
+            background: transparent;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #475569;
+            text-align: left;
+        }
+        .menu-item:hover { background: #f1f5f9; color: var(--text-dark); }
+        .menu-item.active { background: #fee2e2; color: var(--accent); }
+        .menu-item .menu-text { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .menu-item .nav-count {
+            background: #e2e8f0;
+            color: #475569;
+            font-size: 11px;
+            border-radius: 999px;
+            padding: 2px 8px;
+        }
+        .menu-item.active .nav-count { background: #fecdd3; color: #be123c; }
+
+        .sidebar-footer { padding-top: 14px; }
+        .status-pill {
+            background: #f1f5f9;
+            padding: 8px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            max-width: 100%;
+        }
+        .status-pill span:last-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: 0 0 8px; }
+        .status-dot.ok { background: #10b981; }
+        .status-dot.loading { background: #f59e0b; animation: pulse 1s infinite alternate; }
+        .status-dot.error { background: #ef4444; }
+        @keyframes pulse { from { opacity: 0.4; } to { opacity: 1; } }
+
+        .sidebar-overlay { display: none; }
+
+        /* Main Layout */
+        .main-content {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .header {
+            background: #fff;
+            padding: 16px 32px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+        }
+        .header-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
+        .header-title-wrap { min-width: 0; }
+        .header h3 { font-size: 22px; font-weight: 800; letter-spacing: -0.3px; }
+        .header-subtitle { color: var(--text-muted); font-size: 12px; margin-top: 2px; }
+        .header-actions { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
+
+        /* Summary Cards */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 16px;
+            padding: 24px 32px 0 32px;
+        }
+        .sum-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px 18px;
+            position: relative;
+            border-top: 4px solid var(--border);
+            min-width: 0;
+        }
+        .sum-card.all { border-top-color: #ef4444; }
+        .sum-card.done-all { border-top-color: #10b981; }
+        .sum-card.week { border-top-color: #3b82f6; }
+        .sum-card.over { border-top-color: #f59e0b; }
+        .sum-title { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+        .sum-value { font-size: 30px; font-weight: 800; margin-top: 4px; letter-spacing: -0.6px; }
+
+        /* Views */
+        .view { display: none; min-height: 0; flex: 1; }
+        .view.active { display: flex; }
+
+        /* Kanban Columns */
+        .board-container {
+            flex: 1;
+            padding: 24px 32px;
+            display: grid;
+            grid-template-columns: repeat(4, minmax(260px, 1fr));
+            gap: 20px;
+            overflow: auto;
+            align-items: start;
+        }
+        .column {
+            background: #f1f5f9;
+            border-radius: 18px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            min-height: 200px;
+            max-height: 100%;
+            border: 1px solid #e2e8f0;
+        }
+        .column-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; font-size: 14px; font-weight: 800; }
+        .column-header .count { background: #cbd5e1; padding: 2px 9px; border-radius: 999px; font-size: 12px; color: #475569; }
+        .card-list { display: flex; flex-direction: column; gap: 12px; overflow-y: auto; flex: 1; min-height: 100px; padding-bottom: 10px; }
+        .card {
+            background: var(--card-bg);
+            border-radius: 14px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: 0.2s;
+            border: 1px solid var(--border);
+        }
+        .card:hover { transform: translateY(-2px); box-shadow: 0 10px 18px -8px rgba(15, 23, 42, 0.18); }
+        .card-title { font-weight: 700; font-size: 14px; color: var(--text-dark); margin-bottom: 8px; line-height: 1.45; word-break: break-word; }
+        .card img { width: 100%; border-radius: 10px; margin-top: 8px; object-fit: cover; max-height: 150px; border: 1px solid var(--border); }
+        .card-meta { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 12px; color: var(--text-muted); margin-top: 12px; }
+        .badge { padding: 4px 8px; border-radius: 7px; font-size: 11px; font-weight: 800; white-space: nowrap; }
+        .badge.tiktok { background: #f1f5f9; color: #0f172a; border: 1px solid #cbd5e1; }
+        .badge.facebook { background: #e0f2fe; color: #0369a1; }
+        .badge.instagram { background: #fce7f3; color: #be185d; }
+        .card-status-select {
+            display: none;
+            width: 100%;
+            margin-top: 12px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: #fff;
+            color: var(--text-dark);
+        }
+        .empty-state {
+            border: 1px dashed #cbd5e1;
+            background: rgba(255,255,255,0.55);
+            color: #64748b;
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        /* Calendar */
+        .calendar-view {
+            flex-direction: column;
+            overflow: auto;
+            padding: 24px 32px 32px;
+        }
+        .calendar-panel {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+        }
+        .calendar-toolbar {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .calendar-title { font-weight: 800; font-size: 18px; }
+        .calendar-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .calendar-scroll-hint {
+            display: none;
+            padding: 10px 14px;
+            background: #fff7ed;
+            color: #9a3412;
+            border-bottom: 1px solid #fed7aa;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .calendar-table-wrap {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            background: #fff;
+        }
+        .calendar-table {
+            width: 100%;
+            min-width: 860px;
+            border-collapse: separate;
+            border-spacing: 0;
+            table-layout: fixed;
+        }
+        .calendar-table th {
+            padding: 11px 12px;
+            background: #f8fafc;
+            border-bottom: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 800;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .calendar-table th:last-child { border-right: 0; }
+        .calendar-table td {
+            vertical-align: top;
+            height: 150px;
+            padding: 0;
+            border-right: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            background: #fff;
+        }
+        .calendar-table td:last-child { border-right: 0; }
+        .calendar-table tbody tr:last-child td { border-bottom: 0; }
+        .calendar-table td.calendar-empty { background: #f8fafc; }
+        .calendar-day {
+            min-height: 150px;
+            height: 100%;
+            padding: 10px;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .calendar-day.empty { background: #f8fafc; }
+        .calendar-day.today { box-shadow: inset 0 0 0 2px rgba(225, 29, 72, 0.25); }
+        .calendar-day-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .calendar-date { font-size: 13px; font-weight: 800; }
+        .calendar-date .weekday-mobile { display: none; color: var(--text-muted); font-weight: 600; margin-left: 4px; }
+        .day-add {
+            width: 28px;
+            height: 28px;
+            border-radius: 9px;
+            border: 1px solid var(--border);
+            background: #fff;
+            color: var(--accent);
+            cursor: pointer;
+            font-weight: 800;
+        }
+        .day-add:hover { background: #fff1f2; }
+        .calendar-card-list { display: flex; flex-direction: column; gap: 6px; }
+        .calendar-card {
+            border: 1px solid var(--border);
+            background: #f8fafc;
+            border-radius: 9px;
+            padding: 7px 8px;
+            cursor: pointer;
+            font-size: 12px;
+            line-height: 1.35;
+        }
+        .calendar-card:hover { background: #f1f5f9; }
+        .calendar-card strong { display: block; font-size: 12px; margin-bottom: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .calendar-more { font-size: 12px; color: var(--text-muted); font-weight: 700; padding: 2px 4px; }
+
+        /* Buttons */
+        .btn {
+            padding: 10px 18px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-weight: 800;
+            font-size: 14px;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            min-height: 42px;
+        }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-primary:hover { background: var(--accent-hover); }
+        .btn-sub { width: 100%; background: #f1f5f9; color: #475569; margin-top: 8px; justify-content: center; font-size: 13px; }
+        .btn-sub:hover { background: #e2e8f0; }
+        .btn-light { background: #f8fafc; color: #334155; border: 1px solid var(--border); }
+        .btn-light:hover { background: #f1f5f9; }
+        .btn-danger { background:#fee2e2; color:#ef4444; }
+        .btn-secondary { background:#eef2ff; color:#6366f1; }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.34);
+            backdrop-filter: blur(4px);
+            justify-content: center;
+            align-items: center;
+            padding: 18px;
+            z-index: 1000;
+        }
+        .modal.show { display: flex; }
+        .modal-content {
+            background: #fff;
+            padding: 28px;
+            border-radius: 18px;
+            width: 480px;
+            max-width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            border: 1px solid var(--border);
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.14);
+            max-height: 92vh;
+            overflow: auto;
+        }
+        .modal-header { font-size: 20px; font-weight: 800; margin-bottom: 2px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 13px; font-weight: 800; color: #475569; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 14px;
+            outline: none;
+            transition: 0.2s;
+            color: var(--text-dark);
+            background: #fff;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .image-preview-wrap { display:none; margin-top:10px; position:relative; }
+        .image-preview-wrap img { width:100%; max-height:150px; object-fit:cover; border-radius:10px; border: 1px solid var(--border); }
+        .remove-image-btn { position:absolute; top:8px; right:8px; background:rgba(15,23,42,0.68); color:white; border:none; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size: 18px; line-height: 1; }
+        .modal-footer { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px; }
+
+        /* Loading Screen */
+        #loading-screen {
+            position: fixed;
+            inset: 0;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .loader-bar { width: 180px; height: 4px; background: #e2e8f0; border-radius: 2px; overflow: hidden; margin-top: 16px; }
+        .loader-progress { width: 50%; height: 100%; background: var(--accent); animation: loading 1.5s infinite ease-in-out; }
+        @keyframes loading { 0% { transform: translateX(-100%); } 100% { transform: translateX(200%); } }
+
+        @media (max-width: 1200px) {
+            .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .board-container { grid-template-columns: repeat(2, minmax(260px, 1fr)); }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                display: block;
+                min-height: 100dvh;
+                height: auto;
+                overflow: auto;
+            }
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                width: min(86vw, 310px);
+                height: 100dvh;
+                margin-left: 0 !important;
+                transform: translateX(0);
+                box-shadow: var(--shadow);
+            }
+            body.sidebar-closed .sidebar { transform: translateX(-105%); }
+            .sidebar-overlay {
+                display: block;
+                position: fixed;
+                inset: 0;
+                background: rgba(15, 23, 42, 0.35);
+                z-index: 800;
+                opacity: 1;
+                pointer-events: auto;
+                transition: opacity 0.2s ease;
+            }
+            body.sidebar-closed .sidebar-overlay { opacity: 0; pointer-events: none; }
+            .main-content { min-height: 100dvh; overflow: visible; }
+            .header {
+                position: sticky;
+                top: 0;
+                z-index: 700;
+                padding: 12px 14px;
+            }
+            .header h3 { font-size: 18px; }
+            .header-subtitle { display: none; }
+            .header-actions .btn { padding: 10px 12px; }
+            .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 14px; gap: 10px; }
+            .sum-card { padding: 12px; border-radius: 12px; }
+            .sum-value { font-size: 24px; }
+            .view.active { display: block; }
+            .board-container { padding: 14px; display: grid; grid-template-columns: 1fr; gap: 14px; overflow: visible; }
+            .column { min-height: auto; max-height: none; padding: 14px; }
+            .card-list { overflow: visible; min-height: 50px; }
+            .card:hover { transform: none; }
+            .card-status-select { display: block; }
+            .calendar-view { padding: 14px; overflow: visible; }
+            .calendar-toolbar { align-items: flex-start; }
+            .calendar-actions { width: 100%; justify-content: space-between; }
+            .calendar-scroll-hint { display: block; }
+            .calendar-table-wrap { overflow-x: auto; border-top: 1px solid var(--border); }
+            .calendar-table { width: 760px; min-width: 760px; }
+            .calendar-table th { padding: 8px 6px; font-size: 11px; }
+            .calendar-table td { height: 118px; }
+            .calendar-day {
+                min-height: 118px;
+                border-right: 0;
+                padding: 8px;
+            }
+            .calendar-day.empty { display: flex; }
+            .calendar-date .weekday-mobile { display: inline; }
+            .day-add { width: 26px; height: 26px; }
+            .modal { align-items: flex-end; padding: 0; }
+            .modal-content {
+                width: 100%;
+                max-width: 100%;
+                border-radius: 20px 20px 0 0;
+                padding: 20px;
+                max-height: 92dvh;
+            }
+            .form-row { grid-template-columns: 1fr; }
+            .modal-footer { grid-template-columns: 1fr; }
+            .btn, .icon-btn, .menu-item, .form-group input, .form-group select, .form-group textarea { min-height: 44px; }
+        }
+
+        @media (hover: none) and (pointer: coarse) {
+            .card:hover { transform: none; }
+            .card-status-select { display: block; }
+        }
+    </style>
+</head>
+<body class="sidebar-closed">
+
+    <div id="loading-screen">
+        <h1 style="font-size: 30px; font-weight: 800; color: #e11d48;">ContentFlow</h1>
+        <div class="loader-bar"><div class="loader-progress"></div></div>
+        <p style="margin-top: 12px; color: var(--text-muted); font-size: 13px;">กำลังโหลดข้อมูลจาก Google Sheets...</p>
+    </div>
+
+    <div class="sidebar-overlay" onclick="toggleSidebar(false)" aria-hidden="true"></div>
+
+    <aside class="sidebar" aria-label="เมนูหลัก">
+        <div class="sidebar-content">
+            <div class="sidebar-header">
+                <div class="logo-area">
+                    <h2>ContentFlow</h2>
+                    <p>sync กับ Google Sheets</p>
+                </div>
+                <button class="icon-btn" id="sidebar-toggle-sidebar" onclick="toggleSidebar(false)" aria-label="ปิดเมนู" aria-expanded="true">×</button>
+            </div>
+
+            <div class="nav-group" data-section="views">
+                <button class="section-toggle" type="button" onclick="toggleSection('views')">
+                    <span>มุมมอง</span><span class="chevron">▾</span>
+                </button>
+                <div class="section-body">
+                    <button class="menu-item active" id="nav-board" type="button" onclick="switchView('board')">
+                        <span>📋</span><span class="menu-text">Schedule Flow</span>
+                    </button>
+                    <button class="menu-item" id="nav-calendar" type="button" onclick="switchView('calendar')">
+                        <span>📅</span><span class="menu-text">ปฏิทินรายเดือน</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="nav-group" data-section="accounts">
+                <button class="section-toggle" type="button" onclick="toggleSection('accounts')">
+                    <span>บัญชีของฉัน</span><span class="chevron">▾</span>
+                </button>
+                <div class="section-body">
+                    <div id="account-list" style="display: flex; flex-direction: column; gap: 2px;"></div>
+                    <button class="btn btn-sub" type="button" onclick="promptNewAccount()">+ เพิ่มบัญชีใหม่</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="status-pill" title="สถานะการเชื่อมต่อ">
+                <span id="status-dot" class="status-dot loading"></span>
+                <span id="status-text">กำลังเชื่อมต่อ...</span>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="header">
+            <div class="header-left">
+                <button class="icon-btn" id="sidebar-toggle-main" onclick="toggleSidebar()" aria-label="เปิด/ปิดเมนู" aria-expanded="false">☰</button>
+                <div class="header-title-wrap">
+                    <h3 id="current-board-title">Schedule Flow</h3>
+                    <p class="header-subtitle" id="view-description">จัดการแผนคอนเทนต์แบบ Kanban และปฏิทิน</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-primary" type="button" onclick="openCardModal()">+ เพิ่มงาน</button>
+            </div>
+        </header>
+
+        <section class="summary-grid" aria-label="สรุปงาน">
+            <div class="sum-card all"><div class="sum-title">งานทั้งหมด</div><div class="sum-value" id="sum-all">0</div></div>
+            <div class="sum-card done-all"><div class="sum-title">ลงแล้ว</div><div class="sum-value" id="sum-done">0</div></div>
+            <div class="sum-card week"><div class="sum-title">ใน 7 วัน</div><div class="sum-value" id="sum-week">0</div></div>
+            <div class="sum-card over"><div class="sum-title">เกินกำหนด</div><div class="sum-value" id="sum-over">0</div></div>
+        </section>
+
+        <section class="view active" id="kanban-view" aria-label="Schedule Flow Kanban">
+            <div class="board-container">
+                <div class="column"><div class="column-header">🟣 ไอเดีย <span class="count" id="count-idea">0</span></div><div class="card-list" id="list-idea" ondragover="allowDrop(event)" ondrop="drop(event, 'idea')"></div></div>
+                <div class="column"><div class="column-header">🟠 กำลังทำ <span class="count" id="count-doing">0</span></div><div class="card-list" id="list-doing" ondragover="allowDrop(event)" ondrop="drop(event, 'doing')"></div></div>
+                <div class="column"><div class="column-header">🔵 รอตรวจงาน <span class="count" id="count-review">0</span></div><div class="card-list" id="list-review" ondragover="allowDrop(event)" ondrop="drop(event, 'review')"></div></div>
+                <div class="column"><div class="column-header">🟢 ลงแล้ว <span class="count" id="count-done">0</span></div><div class="card-list" id="list-done" ondragover="allowDrop(event)" ondrop="drop(event, 'done')"></div></div>
+            </div>
+        </section>
+
+        <section class="view calendar-view" id="calendar-view" aria-label="ปฏิทินรายเดือน">
+            <div class="calendar-panel">
+                <div class="calendar-toolbar">
+                    <div class="calendar-title" id="calendar-title">ปฏิทินรายเดือน</div>
+                    <div class="calendar-actions">
+                        <button class="btn btn-light" type="button" onclick="changeMonth(-1)">‹ เดือนก่อน</button>
+                        <button class="btn btn-light" type="button" onclick="goToday()">วันนี้</button>
+                        <button class="btn btn-light" type="button" onclick="changeMonth(1)">เดือนถัดไป ›</button>
+                    </div>
+                </div>
+                <p class="calendar-scroll-hint">เลื่อนซ้าย-ขวาเพื่อดูตารางครบ 7 วันบนมือถือ</p>
+                <div class="calendar-table-wrap">
+                    <table class="calendar-table" aria-label="ตารางปฏิทินรายเดือน">
+                        <thead>
+                            <tr>
+                                <th scope="col">อาทิตย์</th>
+                                <th scope="col">จันทร์</th>
+                                <th scope="col">อังคาร</th>
+                                <th scope="col">พุธ</th>
+                                <th scope="col">พฤหัส</th>
+                                <th scope="col">ศุกร์</th>
+                                <th scope="col">เสาร์</th>
+                            </tr>
+                        </thead>
+                        <tbody id="calendar-grid"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="modal" id="card-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-content">
+            <div class="modal-header" id="modal-title">แก้ไขงาน</div>
+            <div class="form-group"><label for="f-title">ชื่องาน / หัวข้อ</label><input type="text" id="f-title" placeholder="เช่น รีวิวร้านอาหารแถวสาย 5"></div>
+            <div class="form-row">
+                <div class="form-group"><label for="f-plat">แพลตฟอร์ม</label><select id="f-plat"><option value="TikTok">TikTok</option><option value="Facebook">Facebook</option><option value="Instagram">Instagram</option></select></div>
+                <div class="form-group"><label for="f-status">สถานะ</label><select id="f-status"><option value="idea">ไอเดีย</option><option value="doing">กำลังทำ</option><option value="review">รอตรวจงาน</option><option value="done">ลงแล้ว</option></select></div>
+            </div>
+            <div class="form-group"><label for="f-date">วันที่ลงงาน</label><input type="date" id="f-date"></div>
+            <div class="form-group">
+                <label for="f-image">รูปภาพแนบงาน</label>
+                <input type="file" id="f-image" accept="image/*" onchange="previewFile()">
+                <div id="preview-wrap" class="image-preview-wrap">
+                    <img id="img-render" src="" alt="รูปภาพแนบงาน">
+                    <button class="remove-image-btn" type="button" aria-label="ลบรูปภาพ" onclick="removeImage()">×</button>
+                </div>
+            </div>
+            <div class="form-group"><label for="f-note">โน้ต</label><textarea id="f-note" rows="3" placeholder="ใส่รายละเอียดคำอธิบายเพิ่มเติม..."></textarea></div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" id="btn-delete-card" type="button" onclick="deleteCard()">ลบ</button>
+                <button class="btn btn-secondary" type="button" onclick="closeCardModal()">ยกเลิก</button>
+                <button class="btn btn-primary" type="button" onclick="saveCard()">บันทึก</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API = "https://script.google.com/macros/s/AKfycbx308F1MnmiEOb1oGA-IRxLJHdvwUKN42eYvvWFdM4GsxGIwM2NRj5e22qiRDhsI8HMKA/exec";
+        const STORAGE_KEY = "schedule-flow-local-backup-v2";
+        const STATUSES = ["idea", "doing", "review", "done"];
+        const STATUS_LABELS = { idea: "ไอเดีย", doing: "กำลังทำ", review: "รอตรวจงาน", done: "ลงแล้ว" };
+        const TH_MONTHS = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+        const TH_WEEKDAYS = ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัส", "ศุกร์", "เสาร์"];
+
+        let state = { cards: [], accounts: [], nextCardId: 1, nextAcctId: 1, activeAcct: null };
+        let ui = { currentView: "board", currentMonth: new Date() };
+        let lastIsMobile = window.innerWidth <= 768;
+        let editCardId = null;
+        let currentImageData = "";
+
+        document.addEventListener("DOMContentLoaded", init);
+
+        async function init() {
+            setInitialSidebarState();
+            window.addEventListener("resize", handleResize);
+            document.addEventListener("keydown", function (event) {
+                if (event.key === "Escape") {
+                    closeCardModal();
+                    if (window.innerWidth <= 768) toggleSidebar(false);
+                }
+            });
+            document.getElementById("card-modal").addEventListener("click", function (event) {
+                if (event.target === event.currentTarget) closeCardModal();
+            });
+
+            await loadData();
+            switchView("board", false);
+            document.getElementById("loading-screen").style.display = "none";
+        }
+
+        function setInitialSidebarState() {
+            lastIsMobile = window.innerWidth <= 768;
+            document.body.classList.toggle("sidebar-closed", lastIsMobile);
+            syncSidebarButtons();
+        }
+
+        function handleResize() {
+            const isMobile = window.innerWidth <= 768;
+            if (isMobile === lastIsMobile) return;
+            lastIsMobile = isMobile;
+            document.body.classList.toggle("sidebar-closed", isMobile);
+            syncSidebarButtons();
+        }
+
+        function toggleSidebar(forceOpen) {
+            const shouldOpen = typeof forceOpen === "boolean" ? forceOpen : document.body.classList.contains("sidebar-closed");
+            document.body.classList.toggle("sidebar-closed", !shouldOpen);
+            syncSidebarButtons();
+        }
+
+        function syncSidebarButtons() {
+            const isOpen = !document.body.classList.contains("sidebar-closed");
+            ["sidebar-toggle-main", "sidebar-toggle-sidebar"].forEach(function (id) {
+                const el = document.getElementById(id);
+                if (el) el.setAttribute("aria-expanded", String(isOpen));
+            });
+        }
+
+        function toggleSection(sectionName) {
+            const group = document.querySelector(`[data-section="${sectionName}"]`);
+            if (group) group.classList.toggle("collapsed");
+        }
+
+        function switchView(view, closeMenu = true) {
+            ui.currentView = view === "calendar" ? "calendar" : "board";
+            document.getElementById("kanban-view").classList.toggle("active", ui.currentView === "board");
+            document.getElementById("calendar-view").classList.toggle("active", ui.currentView === "calendar");
+            document.getElementById("nav-board").classList.toggle("active", ui.currentView === "board");
+            document.getElementById("nav-calendar").classList.toggle("active", ui.currentView === "calendar");
+
+            const title = ui.currentView === "calendar" ? "ปฏิทินรายเดือน" : "Schedule Flow";
+            const desc = ui.currentView === "calendar" ? "ดูงานตามวันที่ลงคอนเทนต์ในรูปแบบปฏิทิน" : "จัดการงานด้วยบอร์ด Kanban แบบลากวางได้";
+            document.getElementById("current-board-title").innerText = title;
+            document.getElementById("view-description").innerText = desc;
+
+            if (ui.currentView === "calendar") renderCalendar();
+            if (closeMenu && window.innerWidth <= 768) toggleSidebar(false);
+        }
+
+        function setSyncStatus(type, text) {
+            document.getElementById("status-dot").className = "status-dot " + type;
+            document.getElementById("status-text").innerText = text;
+        }
+
+        function timeNow() {
+            return new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+        }
+
+        async function loadData() {
+            setSyncStatus("loading", "กำลังดึงข้อมูล...");
+            try {
+                const res = await fetch(`${API}?action=getAll&ts=${Date.now()}`, { cache: "no-store" });
+                if (!res.ok) throw new Error("HTTP " + res.status);
+                const data = await res.json();
+                hydrateState(data);
+                saveLocalBackup();
+                render();
+                setSyncStatus("ok", "เชื่อมต่อสำเร็จ " + timeNow());
+            } catch (error) {
+                console.error(error);
+                const backup = readLocalBackup();
+                if (backup) {
+                    hydrateState(backup);
+                    render();
+                    setSyncStatus("error", "เชื่อมต่อไม่ได้ - ใช้ข้อมูลสำรอง");
+                } else {
+                    hydrateState({});
+                    render();
+                    setSyncStatus("error", "เชื่อมต่อไม่ได้");
+                }
+            }
+        }
+
+        function hydrateState(data) {
+            const rawAccounts = Array.isArray(data.accounts) ? data.accounts.filter(Boolean) : [];
+            if (rawAccounts.length === 0) rawAccounts.push({ id: 1, name: "Main Account" });
+
+            state.accounts = rawAccounts.map(function (account, index) {
+                return { id: account.id ?? (index + 1), name: account.name || `Account ${index + 1}` };
+            });
+
+            const firstAccountId = state.accounts[0].id;
+            state.cards = Array.isArray(data.cards) ? data.cards.filter(Boolean).map(function (card, index) {
+                return {
+                    id: card.id ?? (index + 1),
+                    title: card.title || "ไม่มีชื่อ",
+                    platform: card.platform || "TikTok",
+                    status: STATUSES.includes(card.status) ? card.status : "idea",
+                    date: card.date || "",
+                    image: card.image || "",
+                    note: card.note || "",
+                    acctId: card.acctId ?? firstAccountId,
+                    createdAt: card.createdAt || ""
+                };
+            }) : [];
+
+            state.nextCardId = Number(data.nextCardId) || getNextId(state.cards);
+            state.nextAcctId = Number(data.nextAcctId) || getNextId(state.accounts);
+            state.activeAcct = state.accounts.some(function (account) { return sameId(account.id, data.activeAcct); }) ? data.activeAcct : firstAccountId;
+        }
+
+        function getNextId(items) {
+            return items.reduce(function (max, item) {
+                return Math.max(max, Number(item.id) || 0);
+            }, 0) + 1;
+        }
+
+        function saveLocalBackup() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                    cards: state.cards,
+                    accounts: state.accounts,
+                    nextCardId: state.nextCardId,
+                    nextAcctId: state.nextAcctId,
+                    activeAcct: state.activeAcct
+                }));
+            } catch (error) {
+                console.warn("Cannot save local backup", error);
+            }
+        }
+
+        function readLocalBackup() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                return raw ? JSON.parse(raw) : null;
+            } catch (error) {
+                return null;
+            }
+        }
+
+        async function pushData() {
+            saveLocalBackup();
+            setSyncStatus("loading", "กำลังบันทึก...");
+            try {
+                const response = await fetch(API, {
+                    method: "POST",
+                    body: JSON.stringify({
+                        action: "save",
+                        cards: state.cards,
+                        accounts: state.accounts,
+                        nextCardId: state.nextCardId,
+                        nextAcctId: state.nextAcctId
+                    })
+                });
+                if (!response.ok) throw new Error("HTTP " + response.status);
+                const result = await response.json();
+                if (!result.success) throw new Error(result.message || "Save failed");
+                setSyncStatus("ok", "ซิงค์ข้อมูลสำเร็จ " + timeNow());
+            } catch (error) {
+                console.error(error);
+                setSyncStatus("error", "บันทึกออนไลน์ไม่สำเร็จ");
+            }
+        }
+
+        async function previewFile() {
+            const file = document.getElementById("f-image").files[0];
+            if (!file) return;
+            if (!file.type.startsWith("image/")) {
+                alert("กรุณาเลือกไฟล์รูปภาพเท่านั้น");
+                return;
+            }
+            setSyncStatus("loading", "กำลังส่งรูปภาพ...");
+            try {
+                const base64Data = await readCompressedImage(file);
+                const response = await fetch(API, {
+                    method: "POST",
+                    body: JSON.stringify({ action: "uploadImage", base64Data, fileName: file.name })
+                });
+                if (!response.ok) throw new Error("HTTP " + response.status);
+                const resData = await response.json();
+                if (resData.success && resData.url) {
+                    currentImageData = resData.url;
+                    document.getElementById("img-render").src = resData.url;
+                    document.getElementById("preview-wrap").style.display = "block";
+                    setSyncStatus("ok", "อัปโหลดรูปสำเร็จ");
+                } else {
+                    throw new Error(resData.message || "Upload failed");
+                }
+            } catch (error) {
+                console.error(error);
+                setSyncStatus("error", "รูปภาพล้มเหลว");
+                alert("อัปโหลดรูปไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อหรือสิทธิ์ของ Google Apps Script");
+            }
+        }
+
+        function readCompressedImage(file) {
+            return new Promise(function (resolve, reject) {
+                const reader = new FileReader();
+                reader.onerror = reject;
+                reader.onload = function () {
+                    const originalDataUrl = reader.result;
+                    if (file.size <= 900 * 1024) {
+                        resolve(originalDataUrl);
+                        return;
+                    }
+
+                    const img = new Image();
+                    img.onload = function () {
+                        const maxWidth = 1280;
+                        const scale = Math.min(1, maxWidth / img.width);
+                        const canvas = document.createElement("canvas");
+                        canvas.width = Math.round(img.width * scale);
+                        canvas.height = Math.round(img.height * scale);
+                        const ctx = canvas.getContext("2d");
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        resolve(canvas.toDataURL("image/jpeg", 0.82));
+                    };
+                    img.onerror = function () { resolve(originalDataUrl); };
+                    img.src = originalDataUrl;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function removeImage() {
+            document.getElementById("f-image").value = "";
+            currentImageData = "";
+            document.getElementById("img-render").src = "";
+            document.getElementById("preview-wrap").style.display = "none";
+        }
+
+        function render() {
+            renderAccounts();
+            renderCards();
+            calculateSummary();
+            if (ui.currentView === "calendar") renderCalendar();
+        }
+
+        function renderAccounts() {
+            const list = document.getElementById("account-list");
+            list.innerHTML = "";
+            state.accounts.forEach(function (account) {
+                const count = state.cards.filter(function (card) { return sameId(card.acctId, account.id); }).length;
+                const item = document.createElement("button");
+                item.type = "button";
+                item.className = "menu-item " + (sameId(state.activeAcct, account.id) ? "active" : "");
+                item.innerHTML = `<span>👤</span><span class="menu-text">${escapeHTML(account.name)}</span><span class="nav-count">${count}</span>`;
+                item.onclick = function () {
+                    state.activeAcct = account.id;
+                    saveLocalBackup();
+                    render();
+                    if (window.innerWidth <= 768) toggleSidebar(false);
+                };
+                list.appendChild(item);
+            });
+        }
+
+        function renderCards() {
+            const columns = ["idea", "doing", "review", "done"];
+            columns.forEach(function (col) {
+                const list = document.getElementById(`list-${col}`);
+                list.innerHTML = "";
+                const filtered = sortCards(state.cards.filter(function (card) {
+                    return card.status === col && sameId(card.acctId, state.activeAcct);
+                }));
+                document.getElementById(`count-${col}`).innerText = filtered.length;
+
+                if (filtered.length === 0) {
+                    const empty = document.createElement("div");
+                    empty.className = "empty-state";
+                    empty.innerText = "ยังไม่มีงานในช่องนี้";
+                    list.appendChild(empty);
+                    return;
+                }
+
+                filtered.forEach(function (card) {
+                    const div = document.createElement("div");
+                    div.className = "card";
+                    div.draggable = true;
+                    div.ondragstart = function (event) { event.dataTransfer.setData("text/plain", card.id); };
+                    div.onclick = function (event) {
+                        if (event.target.closest("select, button, a, input")) return;
+                        openCardModal(card.id);
+                    };
+                    const imgHtml = card.image ? `<img src="${escapeAttribute(card.image)}" alt="รูปภาพของ ${escapeAttribute(card.title)}">` : "";
+                    div.innerHTML = `
+                        <div class="card-title">${escapeHTML(card.title)}</div>
+                        ${imgHtml}
+                        <div class="card-meta">
+                            <span class="badge ${escapeAttribute((card.platform || "").toLowerCase())}">${escapeHTML(card.platform || "-")}</span>
+                            <span>${escapeHTML(formatDate(card.date))}</span>
+                        </div>
+                        <select class="card-status-select" aria-label="เปลี่ยนสถานะงาน">
+                            ${renderStatusOptions(card.status)}
+                        </select>
+                    `;
+                    const statusSelect = div.querySelector(".card-status-select");
+                    statusSelect.addEventListener("click", function (event) { event.stopPropagation(); });
+                    statusSelect.addEventListener("change", function (event) {
+                        event.stopPropagation();
+                        updateCardStatus(card.id, event.target.value);
+                    });
+                    list.appendChild(div);
+                });
+            });
+        }
+
+        function renderStatusOptions(activeStatus) {
+            return STATUSES.map(function (status) {
+                return `<option value="${status}" ${status === activeStatus ? "selected" : ""}>${STATUS_LABELS[status]}</option>`;
+            }).join("");
+        }
+
+        function calculateSummary() {
+            const activeCards = state.cards.filter(function (card) { return sameId(card.acctId, state.activeAcct); });
+            document.getElementById("sum-all").innerText = activeCards.length;
+            document.getElementById("sum-done").innerText = activeCards.filter(function (card) { return card.status === "done"; }).length;
+
+            let in7Days = 0;
+            let overdue = 0;
+            const today = startOfDay(new Date());
+            const sevenDaysLater = new Date(today);
+            sevenDaysLater.setDate(today.getDate() + 7);
+
+            activeCards.forEach(function (card) {
+                const cardDate = parseDateKey(card.date);
+                if (!cardDate) return;
+                if (card.status !== "done" && cardDate < today) overdue += 1;
+                if (cardDate >= today && cardDate <= sevenDaysLater) in7Days += 1;
+            });
+
+            document.getElementById("sum-week").innerText = in7Days;
+            document.getElementById("sum-over").innerText = overdue;
+        }
+
+        function renderCalendar() {
+            const body = document.getElementById("calendar-grid");
+            body.innerHTML = "";
+
+            const year = ui.currentMonth.getFullYear();
+            const month = ui.currentMonth.getMonth();
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const firstWeekday = firstDay.getDay();
+
+            document.getElementById("calendar-title").innerText = `${TH_MONTHS[month]} ${year + 543} · ${daysInMonth} วัน`;
+
+            const activeCards = sortCards(state.cards.filter(function (card) { return sameId(card.acctId, state.activeAcct); }));
+            const todayKey = toDateKey(new Date());
+            const maxVisible = window.innerWidth <= 768 ? 2 : 3;
+
+            /*
+                คำนวณจำนวนช่องของตารางจากวันเริ่มต้น + จำนวนวันจริงของเดือน
+                เพื่อให้เดือนที่มี 30/31 วันแสดงครบ และไม่มีวันปลายเดือนหลุดออกจากตาราง
+            */
+            const totalCells = Math.ceil((firstWeekday + daysInMonth) / 7) * 7;
+            let row = null;
+
+            for (let cellIndex = 0; cellIndex < totalCells; cellIndex += 1) {
+                if (cellIndex % 7 === 0) {
+                    row = document.createElement("tr");
+                    body.appendChild(row);
+                }
+
+                const day = cellIndex - firstWeekday + 1;
+                if (day < 1 || day > daysInMonth) {
+                    row.appendChild(createEmptyCalendarCell());
+                    continue;
+                }
+
+                const date = new Date(year, month, day);
+                const key = toDateKey(date);
+                const dayCards = activeCards.filter(function (card) { return card.date === key; });
+                row.appendChild(createCalendarCell(date, key, dayCards, todayKey, maxVisible));
+            }
+        }
+
+        function createEmptyCalendarCell() {
+            const cell = document.createElement("td");
+            cell.className = "calendar-empty";
+            cell.setAttribute("aria-hidden", "true");
+            cell.innerHTML = '<div class="calendar-day empty"></div>';
+            return cell;
+        }
+
+        function createCalendarCell(date, key, dayCards, todayKey, maxVisible) {
+            const day = date.getDate();
+            const cell = document.createElement("td");
+            cell.className = (key === todayKey ? "calendar-today" : "") + (dayCards.length ? " has-cards" : "");
+            cell.setAttribute("data-date", key);
+            cell.innerHTML = `
+                <div class="calendar-day${key === todayKey ? " today" : ""}">
+                    <div class="calendar-day-header">
+                        <div class="calendar-date">${day}<span class="weekday-mobile">${TH_WEEKDAYS[date.getDay()]}</span></div>
+                        <button class="day-add" type="button" aria-label="เพิ่มงานวันที่ ${formatDate(key)}" title="เพิ่มงานวันที่ ${formatDate(key)}">+</button>
+                    </div>
+                    <div class="calendar-card-list"></div>
+                </div>
+            `;
+
+            cell.querySelector(".day-add").addEventListener("click", function (event) {
+                event.stopPropagation();
+                openCardModal(null, key);
+            });
+
+            const list = cell.querySelector(".calendar-card-list");
+            dayCards.slice(0, maxVisible).forEach(function (card) {
+                const item = document.createElement("div");
+                item.className = "calendar-card";
+                item.innerHTML = `<strong>${escapeHTML(card.title)}</strong><span>${escapeHTML(card.platform || "-")} · ${STATUS_LABELS[card.status] || card.status}</span>`;
+                item.onclick = function (event) {
+                    event.stopPropagation();
+                    openCardModal(card.id);
+                };
+                list.appendChild(item);
+            });
+
+            if (dayCards.length > maxVisible) {
+                const more = document.createElement("div");
+                more.className = "calendar-more";
+                more.innerText = `+${dayCards.length - maxVisible} งานเพิ่มเติม`;
+                list.appendChild(more);
+            }
+
+            return cell;
+        }
+
+        function changeMonth(delta) {
+            ui.currentMonth = new Date(ui.currentMonth.getFullYear(), ui.currentMonth.getMonth() + delta, 1);
+            renderCalendar();
+        }
+
+        function goToday() {
+            ui.currentMonth = new Date();
+            renderCalendar();
+        }
+
+        function openCardModal(id = null, presetDate = null) {
+            editCardId = id;
+            const modal = document.getElementById("card-modal");
+            modal.classList.add("show");
+            document.getElementById("btn-delete-card").style.display = id ? "inline-flex" : "none";
+
+            if (id) {
+                const card = state.cards.find(function (item) { return sameId(item.id, id); });
+                if (!card) return;
+                document.getElementById("modal-title").innerText = "แก้ไขงาน";
+                document.getElementById("f-title").value = card.title || "";
+                document.getElementById("f-plat").value = card.platform || "TikTok";
+                document.getElementById("f-status").value = card.status || "idea";
+                document.getElementById("f-date").value = card.date || "";
+                document.getElementById("f-note").value = card.note || "";
+                if (card.image) {
+                    currentImageData = card.image;
+                    document.getElementById("img-render").src = card.image;
+                    document.getElementById("preview-wrap").style.display = "block";
+                } else {
+                    removeImage();
+                }
+            } else {
+                document.getElementById("modal-title").innerText = "เพิ่มงานใหม่";
+                document.getElementById("f-title").value = "";
+                document.getElementById("f-plat").value = "TikTok";
+                document.getElementById("f-status").value = "idea";
+                document.getElementById("f-date").value = presetDate || toDateKey(new Date());
+                document.getElementById("f-note").value = "";
+                removeImage();
+            }
+            setTimeout(function () { document.getElementById("f-title").focus(); }, 50);
+        }
+
+        function closeCardModal() {
+            document.getElementById("card-modal").classList.remove("show");
+        }
+
+        function saveCard() {
+            const title = document.getElementById("f-title").value.trim();
+            if (!title) {
+                alert("กรุณาใส่ชื่องานก่อนบันทึก");
+                document.getElementById("f-title").focus();
+                return;
+            }
+
+            const payload = {
+                title,
+                platform: document.getElementById("f-plat").value,
+                status: document.getElementById("f-status").value,
+                date: document.getElementById("f-date").value,
+                image: currentImageData,
+                note: document.getElementById("f-note").value.trim()
+            };
+
+            if (editCardId) {
+                state.cards = state.cards.map(function (card) {
+                    return sameId(card.id, editCardId) ? { ...card, ...payload } : card;
+                });
+            } else {
+                state.cards.push({
+                    id: state.nextCardId++,
+                    ...payload,
+                    acctId: state.activeAcct,
+                    createdAt: new Date().toISOString()
+                });
+            }
+
+            closeCardModal();
+            render();
+            pushData();
+        }
+
+        function deleteCard() {
+            if (!editCardId) return;
+            if (confirm("คุณต้องการลบงานนี้ใช่หรือไม่?")) {
+                state.cards = state.cards.filter(function (card) { return !sameId(card.id, editCardId); });
+                closeCardModal();
+                render();
+                pushData();
+            }
+        }
+
+        function promptNewAccount() {
+            const name = prompt("ระบุชื่อบัญชีใหม่:");
+            if (name && name.trim()) {
+                const newAccount = { id: state.nextAcctId++, name: name.trim() };
+                state.accounts.push(newAccount);
+                state.activeAcct = newAccount.id;
+                render();
+                pushData();
+            }
+        }
+
+        function allowDrop(event) {
+            event.preventDefault();
+        }
+
+        function drop(event, col) {
+            event.preventDefault();
+            const id = event.dataTransfer.getData("text/plain");
+            updateCardStatus(id, col);
+        }
+
+        function updateCardStatus(id, status) {
+            if (!STATUSES.includes(status)) return;
+            state.cards = state.cards.map(function (card) {
+                return sameId(card.id, id) ? { ...card, status } : card;
+            });
+            render();
+            pushData();
+        }
+
+        function sortCards(cards) {
+            return [...cards].sort(function (a, b) {
+                const dateA = a.date || "9999-12-31";
+                const dateB = b.date || "9999-12-31";
+                if (dateA !== dateB) return dateA.localeCompare(dateB);
+                return String(a.id).localeCompare(String(b.id));
+            });
+        }
+
+        function sameId(a, b) {
+            return String(a) === String(b);
+        }
+
+        function startOfDay(date) {
+            return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        }
+
+        function parseDateKey(value) {
+            if (!value || typeof value !== "string") return null;
+            const parts = value.split("-").map(Number);
+            if (parts.length !== 3 || parts.some(Number.isNaN)) return null;
+            return new Date(parts[0], parts[1] - 1, parts[2]);
+        }
+
+        function toDateKey(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, "0");
+            const day = String(date.getDate()).padStart(2, "0");
+            return `${year}-${month}-${day}`;
+        }
+
+        function formatDate(value) {
+            const date = parseDateKey(value);
+            if (!date) return "-";
+            return `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}/${date.getFullYear() + 543}`;
+        }
+
+        function escapeHTML(value) {
+            return String(value ?? "").replace(/[&<>'"]/g, function (char) {
+                return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char];
+            });
+        }
+
+        function escapeAttribute(value) {
+            return escapeHTML(value).replace(/`/g, "&#96;");
+        }
+    </script>
+</body>
+</html>
