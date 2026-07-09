@@ -539,22 +539,38 @@ async function fetchData() {
     setSyncStatus('error', 'เชื่อมต่อไม่ได้');
   }
 }
-
+  
 async function pushData() {
-  if (syncing) return;
-  syncing = true;
-  setSyncStatus('loading', 'กำลังบันทึก...');
+  // เปลี่ยนสถานะมุมล่างซ้ายให้แสดงว่ากำลังบันทึกข้อมูล
+  setSyncStatus('loading', 'กำลังบันทึกข้อมูล...');
+  
+  // เตรียมโครงสร้างก้อนข้อมูลให้ตรงกับที่ Apps Script รอรับ
+  const payload = {
+    action: 'save',
+    cards: state.cards,
+    accounts: state.accounts,
+    nextCardId: state.nextCardId,
+    nextAcctId: state.nextAcctId
+  };
+
   try {
-    await fetch(API, {
-      method: 'POST',
-      body: JSON.stringify({
-        action: 'save',
-        cards: state.cards,
-        accounts: state.accounts,
-        nextCardId: state.nextCardId,
-        nextAcctId: state.nextAcctId,
-      }),
+    const response = await fetch(API, {
+      method: "POST",
+      body: JSON.stringify(payload)
     });
+    
+    const result = await response.json();
+    if (result.success) {
+      setSyncStatus('ok', 'ซิงค์ข้อมูลสำเร็จ ' + timeNow());
+    } else {
+      throw new Error(result.error || 'Save failed');
+    }
+  } catch (error) {
+    console.error("Sync Error:", error);
+    setSyncStatus('error', 'เชื่อมต่อไม่ได้');
+  }
+}
+
     setSyncStatus('ok', 'บันทึกแล้ว ' + timeNow());
     showToast('✓ บันทึกแล้ว', 'ok');
   } catch(e) {
