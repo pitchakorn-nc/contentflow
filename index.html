@@ -25,12 +25,14 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Sarabun', sans-serif; }
-        html { height: 100%; }
+        html { min-height: 100%; }
         body {
             display: flex;
+            align-items: stretch;
             background-color: var(--bg-main);
-            height: 100vh;
-            overflow: hidden;
+            min-height: 100vh;
+            overflow-x: hidden;
+            overflow-y: auto;
             color: var(--text-dark);
             -webkit-font-smoothing: antialiased;
         }
@@ -47,6 +49,10 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            max-height: 100vh;
             transition: margin-left 0.28s ease, transform 0.28s ease;
             z-index: 900;
         }
@@ -157,9 +163,10 @@
         .main-content {
             flex: 1;
             min-width: 0;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            overflow: visible;
         }
         .header {
             background: #fff;
@@ -202,6 +209,16 @@
         /* Views */
         .view { display: none; min-height: 0; flex: 1; }
         .view.active { display: flex; }
+        #calendar-view.view.active {
+            display: block;
+            flex: 0 0 auto;
+            overflow: visible;
+        }
+        #kanban-view.view.active {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+        }
 
         /* Kanban Columns */
         .board-container {
@@ -266,7 +283,7 @@
         /* Calendar */
         .calendar-view {
             flex-direction: column;
-            overflow: auto;
+            overflow: visible;
             padding: 24px 32px 32px;
         }
         .calendar-panel {
@@ -286,6 +303,12 @@
             flex-wrap: wrap;
         }
         .calendar-title { font-weight: 800; font-size: 18px; }
+        .calendar-title small {
+            color: var(--text-muted);
+            font-size: 12px;
+            font-weight: 700;
+            margin-left: 6px;
+        }
         .calendar-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
         .calendar-scroll-hint {
             display: none;
@@ -323,7 +346,7 @@
         .calendar-table th:last-child { border-right: 0; }
         .calendar-table td {
             vertical-align: top;
-            height: 150px;
+            height: 108px;
             padding: 0;
             border-right: 1px solid var(--border);
             border-bottom: 1px solid var(--border);
@@ -333,13 +356,13 @@
         .calendar-table tbody tr:last-child td { border-bottom: 0; }
         .calendar-table td.calendar-empty { background: #f8fafc; }
         .calendar-day {
-            min-height: 150px;
+            min-height: 108px;
             height: 100%;
-            padding: 10px;
+            padding: 8px;
             background: #fff;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 5px;
         }
         .calendar-day.empty { background: #f8fafc; }
         .calendar-day.today { box-shadow: inset 0 0 0 2px rgba(225, 29, 72, 0.25); }
@@ -689,6 +712,7 @@
 
     <script>
         const API = "https://script.google.com/macros/s/AKfycbx308F1MnmiEOb1oGA-IRxLJHdvwUKN42eYvvWFdM4GsxGIwM2NRj5e22qiRDhsI8HMKA/exec";
+        const APP_VERSION = "2026-07-09-live-calendar-connection-fix";
         const STORAGE_KEY = "schedule-flow-local-backup-v2";
         const STATUSES = ["idea", "doing", "review", "done"];
         const STATUS_LABELS = { idea: "ไอเดีย", doing: "กำลังทำ", review: "รอตรวจงาน", done: "ลงแล้ว" };
@@ -779,12 +803,57 @@
             return new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
         }
 
+        async function apiGetAll() {
+            const url = `${API}?action=getAll&ts=${Date.now()}`;
+            try {
+                const res = await fetch(url, {
+                    method: "GET",
+                    cache: "no-store",
+                    redirect: "follow",
+                    credentials: "omit"
+                });
+                if (!res.ok) throw new Error("HTTP " + res.status);
+                return await res.json();
+            } catch (error) {
+                console.warn("Fetch GET failed, trying JSONP fallback", error);
+                return await jsonpGetAll();
+            }
+        }
+
+        function jsonpGetAll() {
+            return new Promise(function (resolve, reject) {
+                const callbackName = "__scheduleFlowCallback" + Date.now() + Math.floor(Math.random() * 100000);
+                const script = document.createElement("script");
+                const timeout = window.setTimeout(function () {
+                    cleanup();
+                    reject(new Error("JSONP timeout"));
+                }, 15000);
+
+                function cleanup() {
+                    window.clearTimeout(timeout);
+                    delete window[callbackName];
+                    if (script.parentNode) script.parentNode.removeChild(script);
+                }
+
+                window[callbackName] = function (data) {
+                    cleanup();
+                    resolve(data || {});
+                };
+
+                script.onerror = function () {
+                    cleanup();
+                    reject(new Error("JSONP request failed"));
+                };
+
+                script.src = `${API}?action=getAll&callback=${encodeURIComponent(callbackName)}&ts=${Date.now()}`;
+                document.head.appendChild(script);
+            });
+        }
+
         async function loadData() {
             setSyncStatus("loading", "กำลังดึงข้อมูล...");
             try {
-                const res = await fetch(`${API}?action=getAll&ts=${Date.now()}`, { cache: "no-store" });
-                if (!res.ok) throw new Error("HTTP " + res.status);
-                const data = await res.json();
+                const data = await apiGetAll();
                 hydrateState(data);
                 saveLocalBackup();
                 render();
@@ -867,12 +936,16 @@
             try {
                 const response = await fetch(API, {
                     method: "POST",
+                    redirect: "follow",
+                    credentials: "omit",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
                     body: JSON.stringify({
                         action: "save",
                         cards: state.cards,
                         accounts: state.accounts,
                         nextCardId: state.nextCardId,
-                        nextAcctId: state.nextAcctId
+                        nextAcctId: state.nextAcctId,
+                        activeAcct: state.activeAcct
                     })
                 });
                 if (!response.ok) throw new Error("HTTP " + response.status);
@@ -897,6 +970,9 @@
                 const base64Data = await readCompressedImage(file);
                 const response = await fetch(API, {
                     method: "POST",
+                    redirect: "follow",
+                    credentials: "omit",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
                     body: JSON.stringify({ action: "uploadImage", base64Data, fileName: file.name })
                 });
                 if (!response.ok) throw new Error("HTTP " + response.status);
@@ -1067,7 +1143,7 @@
             const daysInMonth = lastDay.getDate();
             const firstWeekday = firstDay.getDay();
 
-            document.getElementById("calendar-title").innerText = `${TH_MONTHS[month]} ${year + 543} · ${daysInMonth} วัน`;
+            document.getElementById("calendar-title").innerHTML = `${TH_MONTHS[month]} ${year + 543}<small>ครบ ${daysInMonth} วัน</small>`;
 
             const activeCards = sortCards(state.cards.filter(function (card) { return sameId(card.acctId, state.activeAcct); }));
             const todayKey = toDateKey(new Date());
@@ -1078,6 +1154,7 @@
                 เพื่อให้เดือนที่มี 30/31 วันแสดงครบ และไม่มีวันปลายเดือนหลุดออกจากตาราง
             */
             const totalCells = Math.ceil((firstWeekday + daysInMonth) / 7) * 7;
+            console.info(`[ScheduleFlow] Calendar ${year}-${String(month + 1).padStart(2, "0")} has ${daysInMonth} days and ${totalCells / 7} rows`);
             let row = null;
 
             for (let cellIndex = 0; cellIndex < totalCells; cellIndex += 1) {
