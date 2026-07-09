@@ -493,7 +493,7 @@ body {
 <div id="toast"></div>
 
 <script>
-const API = "https://script.google.com/macros/s/AKfycbyjUHCHc5Vkj9EKfUzeyvVgAFuYnNuxbjmHVXPVaZLdvY0iJRO3N_6zVS9voKItdSt2Sg/exec";
+const API = "https://script.google.com/macros/s/AKfycbx308F1MnmiEOb1oGA-IRxLJHdvwUKN42eYvvWFdM4GsxGIwM2NRj5e22qiRDhsI8HMKA/exec";
 
 const PC = {
   Instagram:  { bg:'#fce8f3', text:'#7b1d5c', dot:'#D4537E' },
@@ -541,10 +541,7 @@ async function fetchData() {
 }
   
 async function pushData() {
-  // เปลี่ยนสถานะมุมล่างซ้ายให้แสดงว่ากำลังบันทึกข้อมูล
   setSyncStatus('loading', 'กำลังบันทึกข้อมูล...');
-  
-  // เตรียมโครงสร้างก้อนข้อมูลให้ตรงกับที่ Apps Script รอรับ
   const payload = {
     action: 'save',
     cards: state.cards,
@@ -552,13 +549,11 @@ async function pushData() {
     nextCardId: state.nextCardId,
     nextAcctId: state.nextAcctId
   };
-
   try {
     const response = await fetch(API, {
       method: "POST",
       body: JSON.stringify(payload)
     });
-    
     const result = await response.json();
     if (result.success) {
       setSyncStatus('ok', 'ซิงค์ข้อมูลสำเร็จ ' + timeNow());
