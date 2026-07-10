@@ -129,7 +129,17 @@
         .menu-item:hover { background: #f1f5f9; color: var(--text-dark); }
         .menu-item.active { background: #fee2e2; color: var(--accent); }
         .menu-item .menu-text { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .menu-item .nav-count .account-delete-btn {
+        
+        .menu-item.active .nav-count { background: #fecdd3; color: #be123c; }
+        .menu-item .nav-count {
+    background: #e2e8f0;
+    color: #475569;
+    font-size: 11px;
+    border-radius: 999px;
+    padding: 2px 8px;
+}
+
+.account-delete-btn {
     width: 28px;
     height: 28px;
     border: 0;
@@ -137,7 +147,7 @@
     background: transparent;
     color: #ef4444;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 18px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -146,15 +156,7 @@
 
 .account-delete-btn:hover {
     background: #fee2e2;
-} {
-            background: #e2e8f0;
-            color: #475569;
-            font-size: 11px;
-            border-radius: 999px;
-            padding: 2px 8px;
-        }
-        .menu-item.active .nav-count { background: #fecdd3; color: #be123c; }
-
+}
         .sidebar-footer { padding-top: 14px; }
         .status-pill {
             background: #f1f5f9;
@@ -1044,7 +1046,15 @@
             document.getElementById("img-render").src = "";
             document.getElementById("preview-wrap").style.display = "none";
         }
+function render() {
+    renderAccounts();
+    renderCards();
+    calculateSummary();
 
+    if (ui.currentView === "calendar") {
+        renderCalendar();
+    }
+}
         function renderAccounts() {
     const list = document.getElementById("account-list");
     list.innerHTML = "";
