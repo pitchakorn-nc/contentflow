@@ -1152,11 +1152,9 @@
                         ? "หมดเวลารอการตอบกลับจาก Google Apps Script"
                         : (error && error.message ? error.message : "ไม่ทราบสาเหตุ");
 
-                alert(
-                    "อัปโหลดรูปไม่สำเร็จ
-
-สาเหตุ: " + reason
-                );
+              alert(
+    "อัปโหลดรูปไม่สำเร็จ\n\nสาเหตุ: " + reason
+);
 
                 input.value = "";
             }
