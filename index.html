@@ -129,7 +129,24 @@
         .menu-item:hover { background: #f1f5f9; color: var(--text-dark); }
         .menu-item.active { background: #fee2e2; color: var(--accent); }
         .menu-item .menu-text { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .menu-item .nav-count {
+        .menu-item .nav-count .account-delete-btn {
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #ef4444;
+    cursor: pointer;
+    font-size: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 28px;
+}
+
+.account-delete-btn:hover {
+    background: #fee2e2;
+} {
             background: #e2e8f0;
             color: #475569;
             font-size: 11px;
@@ -1028,31 +1045,71 @@
             document.getElementById("preview-wrap").style.display = "none";
         }
 
-        function render() {
-            renderAccounts();
-            renderCards();
-            calculateSummary();
-            if (ui.currentView === "calendar") renderCalendar();
-        }
-
         function renderAccounts() {
-            const list = document.getElementById("account-list");
-            list.innerHTML = "";
-            state.accounts.forEach(function (account) {
-                const count = state.cards.filter(function (card) { return sameId(card.acctId, account.id); }).length;
-                const item = document.createElement("button");
-                item.type = "button";
-                item.className = "menu-item " + (sameId(state.activeAcct, account.id) ? "active" : "");
-                item.innerHTML = `<span>👤</span><span class="menu-text">${escapeHTML(account.name)}</span><span class="nav-count">${count}</span>`;
-                item.onclick = function () {
-                    state.activeAcct = account.id;
-                    saveLocalBackup();
-                    render();
-                    if (window.innerWidth <= 768) toggleSidebar(false);
-                };
-                list.appendChild(item);
+    const list = document.getElementById("account-list");
+    list.innerHTML = "";
+
+    state.accounts.forEach(function (account) {
+        const count = state.cards.filter(function (card) {
+            return sameId(card.acctId, account.id);
+        }).length;
+
+        const item = document.createElement("div");
+        item.className =
+            "menu-item " +
+            (sameId(state.activeAcct, account.id) ? "active" : "");
+
+        item.innerHTML = `
+            <span>👤</span>
+
+            <span class="menu-text">
+                ${escapeHTML(account.name)}
+            </span>
+
+            <span class="nav-count">
+                ${count}
+            </span>
+
+            ${
+                state.accounts.length > 1
+                    ? `
+                    <button
+                        type="button"
+                        class="account-delete-btn"
+                        aria-label="ลบบัญชี ${escapeAttribute(account.name)}"
+                        title="ลบบัญชี"
+                    >
+                        ×
+                    </button>
+                    `
+                    : ""
+            }
+        `;
+
+        item.addEventListener("click", function (event) {
+            if (event.target.closest(".account-delete-btn")) return;
+
+            state.activeAcct = account.id;
+            saveLocalBackup();
+            render();
+
+            if (window.innerWidth <= 768) {
+                toggleSidebar(false);
+            }
+        });
+
+        const deleteButton = item.querySelector(".account-delete-btn");
+
+        if (deleteButton) {
+            deleteButton.addEventListener("click", function (event) {
+                event.stopPropagation();
+                deleteAccount(account.id);
             });
         }
+
+        list.appendChild(item);
+    });
+}
 
         function renderCards() {
             const columns = ["idea", "doing", "review", "done"];
@@ -1329,7 +1386,45 @@
                 pushData();
             }
         }
+function deleteAccount(accountId) {
+    if (state.accounts.length <= 1) {
+        alert("ต้องมีบัญชีอย่างน้อย 1 บัญชี");
+        return;
+    }
 
+    const account = state.accounts.find(function (item) {
+        return sameId(item.id, accountId);
+    });
+
+    if (!account) return;
+
+    const accountCards = state.cards.filter(function (card) {
+        return sameId(card.acctId, accountId);
+    });
+
+    let message = `ต้องการลบบัญชี "${account.name}" ใช่หรือไม่?`;
+
+    if (accountCards.length > 0) {
+        message += `\n\nงานในบัญชีนี้จำนวน ${accountCards.length} งานจะถูกลบด้วย`;
+    }
+
+    if (!confirm(message)) return;
+
+    state.cards = state.cards.filter(function (card) {
+        return !sameId(card.acctId, accountId);
+    });
+
+    state.accounts = state.accounts.filter(function (item) {
+        return !sameId(item.id, accountId);
+    });
+
+    if (sameId(state.activeAcct, accountId)) {
+        state.activeAcct = state.accounts[0].id;
+    }
+
+    render();
+    pushData();
+}
         function allowDrop(event) {
             event.preventDefault();
         }
