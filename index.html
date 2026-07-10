@@ -276,7 +276,19 @@
         }
         .card:hover { transform: translateY(-2px); box-shadow: 0 10px 18px -8px rgba(15, 23, 42, 0.18); }
         .card-title { font-weight: 700; font-size: 14px; color: var(--text-dark); margin-bottom: 8px; line-height: 1.45; word-break: break-word; }
-        .card img { width: 100%; border-radius: 10px; margin-top: 8px; object-fit: cover; max-height: 150px; border: 1px solid var(--border); }
+        .card img {
+            width: 100%;
+            height: auto;
+            max-height: 320px;
+            border-radius: 10px;
+            margin-top: 8px;
+            object-fit: contain;
+            object-position: center;
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            cursor: zoom-in;
+            display: block;
+        }
         .card-meta { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 12px; color: var(--text-muted); margin-top: 12px; }
         .badge { padding: 4px 8px; border-radius: 7px; font-size: 11px; font-weight: 800; white-space: nowrap; }
         .badge.tiktok { background: #f1f5f9; color: #0f172a; border: 1px solid #cbd5e1; }
@@ -484,9 +496,96 @@
         .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .image-preview-wrap { display:none; margin-top:10px; position:relative; }
-        .image-preview-wrap img { width:100%; max-height:150px; object-fit:cover; border-radius:10px; border: 1px solid var(--border); }
+        .image-preview-wrap img {
+            width: 100%;
+            height: auto;
+            max-height: 320px;
+            object-fit: contain;
+            object-position: center;
+            background: #f8fafc;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            cursor: zoom-in;
+            display: block;
+        }
         .remove-image-btn { position:absolute; top:8px; right:8px; background:rgba(15,23,42,0.68); color:white; border:none; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size: 18px; line-height: 1; }
         .modal-footer { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px; }
+
+
+        /* Image Viewer */
+        .image-viewer {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 3000;
+            background: rgba(2, 6, 23, 0.92);
+            backdrop-filter: blur(6px);
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .image-viewer.show {
+            display: flex;
+        }
+
+        .image-viewer-content {
+            position: relative;
+            width: min(96vw, 1400px);
+            height: min(92vh, 1000px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .image-viewer img {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            object-position: center;
+            border-radius: 12px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.45);
+            background: #0f172a;
+        }
+
+        .image-viewer-close {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.25);
+            background: rgba(15,23,42,0.8);
+            color: #fff;
+            font-size: 28px;
+            line-height: 1;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+        }
+
+        .image-viewer-close:hover {
+            background: rgba(225,29,72,0.95);
+        }
+
+        .image-viewer-caption {
+            position: absolute;
+            left: 12px;
+            right: 64px;
+            bottom: 10px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 700;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.65);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
 
         /* Loading Screen */
         #loading-screen {
@@ -706,6 +805,20 @@
         </section>
     </main>
 
+
+    <div class="image-viewer" id="image-viewer" role="dialog" aria-modal="true" aria-label="ดูรูปภาพขนาดเต็ม">
+        <div class="image-viewer-content">
+            <button
+                class="image-viewer-close"
+                type="button"
+                aria-label="ปิดรูปภาพ"
+                onclick="closeImageViewer()"
+            >×</button>
+            <img id="image-viewer-img" src="" alt="รูปภาพขนาดเต็ม">
+            <div class="image-viewer-caption" id="image-viewer-caption"></div>
+        </div>
+    </div>
+
     <div class="modal" id="card-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
         <div class="modal-content">
             <div class="modal-header" id="modal-title">แก้ไขงาน</div>
@@ -719,7 +832,7 @@
                 <label for="f-image">รูปภาพแนบงาน</label>
                 <input type="file" id="f-image" accept="image/*" onchange="previewFile()">
                 <div id="preview-wrap" class="image-preview-wrap">
-                    <img id="img-render" src="" alt="รูปภาพแนบงาน">
+                    <img id="img-render" src="" alt="รูปภาพแนบงาน" onclick="openImageViewer(this.src, 'รูปภาพแนบงาน')">
                     <button class="remove-image-btn" type="button" aria-label="ลบรูปภาพ" onclick="removeImage()">×</button>
                 </div>
             </div>
@@ -734,7 +847,7 @@
 
     <script>
         const API = "https://script.google.com/macros/s/AKfycbx308F1MnmiEOb1oGA-IRxLJHdvwUKN42eYvvWFdM4GsxGIwM2NRj5e22qiRDhsI8HMKA/exec";
-        const APP_VERSION = "2026-07-10-upload-diagnostics-fix";
+        const APP_VERSION = "2026-07-10-image-viewer-full-ratio";
         const STORAGE_KEY = "schedule-flow-local-backup-v2";
         const STATUSES = ["idea", "doing", "review", "done"];
         const STATUS_LABELS = { idea: "ไอเดีย", doing: "กำลังทำ", review: "รอตรวจงาน", done: "ลงแล้ว" };
@@ -757,6 +870,7 @@
 
                 document.addEventListener("keydown", function (event) {
                     if (event.key === "Escape") {
+                        closeImageViewer();
                         closeCardModal();
                         if (window.innerWidth <= 768) toggleSidebar(false);
                     }
@@ -766,6 +880,15 @@
                 if (modal) {
                     modal.addEventListener("click", function (event) {
                         if (event.target === event.currentTarget) closeCardModal();
+                    });
+                }
+
+                const imageViewer = document.getElementById("image-viewer");
+                if (imageViewer) {
+                    imageViewer.addEventListener("click", function (event) {
+                        if (event.target === event.currentTarget) {
+                            closeImageViewer();
+                        }
                     });
                 }
 
@@ -914,12 +1037,8 @@
         async function loadData() {
             setSyncStatus("loading", "กำลังดึงข้อมูล...");
             try {
-               const data = await apiGetAll();
-if (data && data.success === false) {
-    throw new Error(data.message || "Google Apps Script ส่งข้อผิดพลาดกลับมา");
-}
-
-hydrateState(data);
+                const data = await apiGetAll();
+                hydrateState(data);
                 saveLocalBackup();
                 render();
                 setSyncStatus("ok", "เชื่อมต่อสำเร็จ " + timeNow());
@@ -1193,6 +1312,36 @@ hydrateState(data);
             });
         }
 
+
+        function openImageViewer(imageUrl, caption = "") {
+            if (!imageUrl) return;
+
+            const viewer = document.getElementById("image-viewer");
+            const viewerImage = document.getElementById("image-viewer-img");
+            const viewerCaption = document.getElementById("image-viewer-caption");
+
+            if (!viewer || !viewerImage || !viewerCaption) return;
+
+            viewerImage.src = imageUrl;
+            viewerImage.alt = caption || "รูปภาพขนาดเต็ม";
+            viewerCaption.textContent = caption || "";
+            viewer.classList.add("show");
+            document.body.style.overflow = "hidden";
+        }
+
+        function closeImageViewer() {
+            const viewer = document.getElementById("image-viewer");
+            const viewerImage = document.getElementById("image-viewer-img");
+            const cardModal = document.getElementById("card-modal");
+
+            if (viewer) viewer.classList.remove("show");
+            if (viewerImage) viewerImage.src = "";
+
+            if (!cardModal || !cardModal.classList.contains("show")) {
+                document.body.style.overflow = "";
+            }
+        }
+
         function removeImage() {
             document.getElementById("f-image").value = "";
             currentImageData = "";
@@ -1303,7 +1452,14 @@ hydrateState(data);
                         if (event.target.closest("select, button, a, input")) return;
                         openCardModal(card.id);
                     };
-                    const imgHtml = card.image ? `<img src="${escapeAttribute(card.image)}" alt="รูปภาพของ ${escapeAttribute(card.title)}">` : "";
+                    const imgHtml = card.image
+                        ? `<img
+                            src="${escapeAttribute(card.image)}"
+                            alt="รูปภาพของ ${escapeAttribute(card.title)}"
+                            title="คลิกเพื่อดูรูปขนาดเต็ม"
+                            onclick="event.stopPropagation(); openImageViewer('${escapeJsString(card.image)}', '${escapeJsString(card.title)}')"
+                        >`
+                        : "";
                     div.innerHTML = `
                         <div class="card-title">${escapeHTML(card.title)}</div>
                         ${imgHtml}
@@ -1494,6 +1650,11 @@ hydrateState(data);
 
         function closeCardModal() {
             document.getElementById("card-modal").classList.remove("show");
+
+            const viewer = document.getElementById("image-viewer");
+            if (!viewer || !viewer.classList.contains("show")) {
+                document.body.style.overflow = "";
+            }
         }
 
         function saveCard() {
@@ -1651,6 +1812,16 @@ hydrateState(data);
             return String(value ?? "").replace(/[&<>'"]/g, function (char) {
                 return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char];
             });
+        }
+
+
+        function escapeJsString(value) {
+            return String(value ?? "")
+                .replace(/\\/g, "\\\\")
+                .replace(/'/g, "\\'")
+                .replace(/\r/g, "\\r")
+                .replace(/\n/g, "\\n")
+                .replace(/<\/script/gi, "<\\/script");
         }
 
         function escapeAttribute(value) {
