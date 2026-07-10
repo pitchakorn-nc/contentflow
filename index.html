@@ -914,8 +914,12 @@
         async function loadData() {
             setSyncStatus("loading", "กำลังดึงข้อมูล...");
             try {
-                const data = await apiGetAll();
-                hydrateState(data);
+               const data = await apiGetAll();
+if (data && data.success === false) {
+    throw new Error(data.message || "Google Apps Script ส่งข้อผิดพลาดกลับมา");
+}
+
+hydrateState(data);
                 saveLocalBackup();
                 render();
                 setSyncStatus("ok", "เชื่อมต่อสำเร็จ " + timeNow());
