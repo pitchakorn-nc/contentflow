@@ -130,36 +130,36 @@
         .menu-item.active { background: #fee2e2; color: var(--accent); }
         .menu-item .menu-text { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .menu-item .nav-count {
-    background: #e2e8f0;
-    color: #475569;
-    font-size: 11px;
-    border-radius: 999px;
-    padding: 2px 8px;
-}
+            background: #e2e8f0;
+            color: #475569;
+            font-size: 11px;
+            border-radius: 999px;
+            padding: 2px 8px;
+        }
 
-.menu-item.active .nav-count {
-    background: #fecdd3;
-    color: #be123c;
-}
+        .menu-item.active .nav-count {
+            background: #fecdd3;
+            color: #be123c;
+        }
 
-.account-delete-btn {
-    width: 28px;
-    height: 28px;
-    border: 0;
-    border-radius: 8px;
-    background: transparent;
-    color: #ef4444;
-    cursor: pointer;
-    font-size: 18px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex: 0 0 28px;
-}
+        .account-delete-btn {
+            width: 28px;
+            height: 28px;
+            border: 0;
+            border-radius: 8px;
+            background: transparent;
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 28px;
+        }
 
-.account-delete-btn:hover {
-    background: #fee2e2;
-}
+        .account-delete-btn:hover {
+            background: #fee2e2;
+        }
         .sidebar-footer { padding-top: 14px; }
         .status-pill {
             background: #f1f5f9;
@@ -734,7 +734,7 @@
 
     <script>
         const API = "https://script.google.com/macros/s/AKfycbx308F1MnmiEOb1oGA-IRxLJHdvwUKN42eYvvWFdM4GsxGIwM2NRj5e22qiRDhsI8HMKA/exec";
-        const APP_VERSION = "2026-07-09-live-calendar-connection-fix";
+        const APP_VERSION = "2026-07-10-loading-timeout-account-delete-fix";
         const STORAGE_KEY = "schedule-flow-local-backup-v2";
         const STATUSES = ["idea", "doing", "review", "done"];
         const STATUS_LABELS = { idea: "ไอเดีย", doing: "กำลังทำ", review: "รอตรวจงาน", done: "ลงแล้ว" };
@@ -750,21 +750,44 @@
         document.addEventListener("DOMContentLoaded", init);
 
         async function init() {
-            setInitialSidebarState();
-            window.addEventListener("resize", handleResize);
-            document.addEventListener("keydown", function (event) {
-                if (event.key === "Escape") {
-                    closeCardModal();
-                    if (window.innerWidth <= 768) toggleSidebar(false);
-                }
-            });
-            document.getElementById("card-modal").addEventListener("click", function (event) {
-                if (event.target === event.currentTarget) closeCardModal();
-            });
+            try {
+                setInitialSidebarState();
 
-            await loadData();
-            switchView("board", false);
-            document.getElementById("loading-screen").style.display = "none";
+                window.addEventListener("resize", handleResize);
+
+                document.addEventListener("keydown", function (event) {
+                    if (event.key === "Escape") {
+                        closeCardModal();
+                        if (window.innerWidth <= 768) toggleSidebar(false);
+                    }
+                });
+
+                const modal = document.getElementById("card-modal");
+                if (modal) {
+                    modal.addEventListener("click", function (event) {
+                        if (event.target === event.currentTarget) closeCardModal();
+                    });
+                }
+
+                await loadData();
+                switchView("board", false);
+            } catch (error) {
+                console.error("Initialization error:", error);
+
+                const backup = readLocalBackup();
+                if (backup) {
+                    hydrateState(backup);
+                    render();
+                    setSyncStatus("error", "โหลดออนไลน์ไม่สำเร็จ - ใช้ข้อมูลสำรอง");
+                } else {
+                    hydrateState({});
+                    render();
+                    setSyncStatus("error", "โหลดระบบไม่สำเร็จ");
+                }
+            } finally {
+                const loadingScreen = document.getElementById("loading-screen");
+                if (loadingScreen) loadingScreen.style.display = "none";
+            }
         }
 
         function setInitialSidebarState() {
@@ -825,15 +848,31 @@
             return new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
         }
 
+        async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
+            const controller = new AbortController();
+            const timeoutId = window.setTimeout(function () {
+                controller.abort();
+            }, timeoutMs);
+
+            try {
+                return await fetch(url, {
+                    ...options,
+                    signal: controller.signal
+                });
+            } finally {
+                window.clearTimeout(timeoutId);
+            }
+        }
+
         async function apiGetAll() {
             const url = `${API}?action=getAll&ts=${Date.now()}`;
             try {
-                const res = await fetch(url, {
+                const res = await fetchWithTimeout(url, {
                     method: "GET",
                     cache: "no-store",
                     redirect: "follow",
                     credentials: "omit"
-                });
+                }, 8000);
                 if (!res.ok) throw new Error("HTTP " + res.status);
                 return await res.json();
             } catch (error) {
@@ -849,7 +888,7 @@
                 const timeout = window.setTimeout(function () {
                     cleanup();
                     reject(new Error("JSONP timeout"));
-                }, 15000);
+                }, 8000);
 
                 function cleanup() {
                     window.clearTimeout(timeout);
