@@ -1,1832 +1,1195 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Schedule Flow</title>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-main: #f8fafc;
-            --sidebar-color: #ffffff;
-            --text-dark: #0f172a;
-            --text-muted: #64748b;
-            --primary: #6366f1;
-            --primary-hover: #4f46e5;
-            --accent: #e11d48;
-            --accent-hover: #be185d;
-            --border: #e2e8f0;
-            --card-bg: #ffffff;
-            --soft: #f1f5f9;
-            --shadow: 0 18px 45px rgba(15, 23, 42, 0.10);
-            --sidebar-width: 280px;
-            --radius-lg: 18px;
-            --radius-md: 12px;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Sarabun', sans-serif; }
-        html { min-height: 100%; }
-        body {
-            display: flex;
-            align-items: stretch;
-            background-color: var(--bg-main);
-            min-height: 100vh;
-            overflow-x: hidden;
-            overflow-y: auto;
-            color: var(--text-dark);
-            -webkit-font-smoothing: antialiased;
-        }
-        button, input, select, textarea { font: inherit; }
-        button { -webkit-tap-highlight-color: transparent; }
-
-        /* Sidebar */
-        .sidebar {
-            width: var(--sidebar-width);
-            flex: 0 0 var(--sidebar-width);
-            background: var(--sidebar-color);
-            border-right: 1px solid var(--border);
-            padding: 22px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            height: 100vh;
-            max-height: 100vh;
-            transition: margin-left 0.28s ease, transform 0.28s ease;
-            z-index: 900;
-        }
-        body.sidebar-closed .sidebar { margin-left: calc(var(--sidebar-width) * -1); }
-
-        .sidebar-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-        .logo-area h2 { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 2px; letter-spacing: -0.5px; }
-        .logo-area p { font-size: 12px; color: var(--text-muted); margin-bottom: 22px; }
-        .sidebar-content { min-height: 0; overflow-y: auto; padding-right: 2px; }
-
-        .icon-btn {
-            width: 42px;
-            height: 42px;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            background: #fff;
-            color: var(--text-dark);
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            transition: 0.2s;
-        }
-        .icon-btn:hover { background: var(--soft); }
-        .icon-btn:focus-visible, .btn:focus-visible, .menu-item:focus-visible, .section-toggle:focus-visible {
-            outline: 3px solid rgba(99, 102, 241, 0.18);
-            outline-offset: 2px;
-        }
-
-        .nav-group { margin-bottom: 18px; }
-        .section-toggle {
-            width: 100%;
-            border: 0;
-            background: transparent;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-            padding: 8px 2px;
-            color: var(--text-muted);
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .section-toggle .chevron { transition: transform 0.2s ease; font-size: 13px; }
-        .nav-group.collapsed .section-toggle .chevron { transform: rotate(-90deg); }
-        .section-body {
-            max-height: 520px;
-            overflow: hidden;
-            transition: max-height 0.28s ease, opacity 0.2s ease;
-        }
-        .nav-group.collapsed .section-body { max-height: 0; opacity: 0; pointer-events: none; }
-
-        .menu-item {
-            width: 100%;
-            padding: 11px 14px;
-            margin: 5px 0;
-            border-radius: 10px;
-            border: 0;
-            background: transparent;
-            cursor: pointer;
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 14px;
-            font-weight: 600;
-            color: #475569;
-            text-align: left;
-        }
-        .menu-item:hover { background: #f1f5f9; color: var(--text-dark); }
-        .menu-item.active { background: #fee2e2; color: var(--accent); }
-        .menu-item .menu-text { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .menu-item .nav-count {
-            background: #e2e8f0;
-            color: #475569;
-            font-size: 11px;
-            border-radius: 999px;
-            padding: 2px 8px;
-        }
-
-        .menu-item.active .nav-count {
-            background: #fecdd3;
-            color: #be123c;
-        }
-
-        .account-delete-btn {
-            width: 28px;
-            height: 28px;
-            border: 0;
-            border-radius: 8px;
-            background: transparent;
-            color: #ef4444;
-            cursor: pointer;
-            font-size: 18px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            flex: 0 0 28px;
-        }
-
-        .account-delete-btn:hover {
-            background: #fee2e2;
-        }
-        .sidebar-footer { padding-top: 14px; }
-        .status-pill {
-            background: #f1f5f9;
-            padding: 8px 12px;
-            border-radius: 999px;
-            font-size: 12px;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            max-width: 100%;
-        }
-        .status-pill span:last-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: 0 0 8px; }
-        .status-dot.ok { background: #10b981; }
-        .status-dot.loading { background: #f59e0b; animation: pulse 1s infinite alternate; }
-        .status-dot.error { background: #ef4444; }
-        @keyframes pulse { from { opacity: 0.4; } to { opacity: 1; } }
-
-        .sidebar-overlay { display: none; }
-
-        /* Main Layout */
-        .main-content {
-            flex: 1;
-            min-width: 0;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: visible;
-        }
-        .header {
-            background: #fff;
-            padding: 16px 32px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 16px;
-        }
-        .header-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
-        .header-title-wrap { min-width: 0; }
-        .header h3 { font-size: 22px; font-weight: 800; letter-spacing: -0.3px; }
-        .header-subtitle { color: var(--text-muted); font-size: 12px; margin-top: 2px; }
-        .header-actions { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
-
-        /* Summary Cards */
-        .summary-grid {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 16px;
-            padding: 24px 32px 0 32px;
-        }
-        .sum-card {
-            background: #fff;
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 16px 18px;
-            position: relative;
-            border-top: 4px solid var(--border);
-            min-width: 0;
-        }
-        .sum-card.all { border-top-color: #ef4444; }
-        .sum-card.done-all { border-top-color: #10b981; }
-        .sum-card.week { border-top-color: #3b82f6; }
-        .sum-card.over { border-top-color: #f59e0b; }
-        .sum-title { font-size: 12px; color: var(--text-muted); font-weight: 600; }
-        .sum-value { font-size: 30px; font-weight: 800; margin-top: 4px; letter-spacing: -0.6px; }
-
-        /* Views */
-        .view { display: none; min-height: 0; flex: 1; }
-        .view.active { display: flex; }
-        #calendar-view.view.active {
-            display: block;
-            flex: 0 0 auto;
-            overflow: visible;
-        }
-        #kanban-view.view.active {
-            display: flex;
-            flex: 1;
-            min-height: 0;
-        }
-
-        /* Kanban Columns */
-        .board-container {
-            flex: 1;
-            padding: 24px 32px;
-            display: grid;
-            grid-template-columns: repeat(4, minmax(260px, 1fr));
-            gap: 20px;
-            overflow: auto;
-            align-items: start;
-        }
-        .column {
-            background: #f1f5f9;
-            border-radius: 18px;
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-            min-height: 200px;
-            max-height: 100%;
-            border: 1px solid #e2e8f0;
-        }
-        .column-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; font-size: 14px; font-weight: 800; }
-        .column-header .count { background: #cbd5e1; padding: 2px 9px; border-radius: 999px; font-size: 12px; color: #475569; }
-        .card-list { display: flex; flex-direction: column; gap: 12px; overflow-y: auto; flex: 1; min-height: 100px; padding-bottom: 10px; }
-        .card {
-            background: var(--card-bg);
-            border-radius: 14px;
-            padding: 16px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            cursor: pointer;
-            transition: 0.2s;
-            border: 1px solid var(--border);
-        }
-        .card:hover { transform: translateY(-2px); box-shadow: 0 10px 18px -8px rgba(15, 23, 42, 0.18); }
-        .card-title { font-weight: 700; font-size: 14px; color: var(--text-dark); margin-bottom: 8px; line-height: 1.45; word-break: break-word; }
-        .card img {
-            width: 100%;
-            height: auto;
-            max-height: 320px;
-            border-radius: 10px;
-            margin-top: 8px;
-            object-fit: contain;
-            object-position: center;
-            background: #f8fafc;
-            border: 1px solid var(--border);
-            cursor: zoom-in;
-            display: block;
-        }
-        .card-meta { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 12px; color: var(--text-muted); margin-top: 12px; }
-        .badge { padding: 4px 8px; border-radius: 7px; font-size: 11px; font-weight: 800; white-space: nowrap; }
-        .badge.tiktok { background: #f1f5f9; color: #0f172a; border: 1px solid #cbd5e1; }
-        .badge.facebook { background: #e0f2fe; color: #0369a1; }
-        .badge.instagram { background: #fce7f3; color: #be185d; }
-        .card-status-select {
-            display: none;
-            width: 100%;
-            margin-top: 12px;
-            padding: 10px 12px;
-            border-radius: 10px;
-            border: 1px solid var(--border);
-            background: #fff;
-            color: var(--text-dark);
-        }
-        .empty-state {
-            border: 1px dashed #cbd5e1;
-            background: rgba(255,255,255,0.55);
-            color: #64748b;
-            border-radius: 12px;
-            padding: 16px;
-            font-size: 13px;
-            text-align: center;
-        }
-
-        /* Calendar */
-        .calendar-view {
-            flex-direction: column;
-            overflow: visible;
-            padding: 24px 32px 32px;
-        }
-        .calendar-panel {
-            background: #fff;
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            overflow: hidden;
-            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
-        }
-        .calendar-toolbar {
-            padding: 16px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-        .calendar-title { font-weight: 800; font-size: 18px; }
-        .calendar-title small {
-            color: var(--text-muted);
-            font-size: 12px;
-            font-weight: 700;
-            margin-left: 6px;
-        }
-        .calendar-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-        .calendar-scroll-hint {
-            display: none;
-            padding: 10px 14px;
-            background: #fff7ed;
-            color: #9a3412;
-            border-bottom: 1px solid #fed7aa;
-            font-size: 12px;
-            font-weight: 700;
-        }
-        .calendar-table-wrap {
-            width: 100%;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            background: #fff;
-        }
-        .calendar-table {
-            width: 100%;
-            min-width: 860px;
-            border-collapse: separate;
-            border-spacing: 0;
-            table-layout: fixed;
-        }
-        .calendar-table th {
-            padding: 11px 12px;
-            background: #f8fafc;
-            border-bottom: 1px solid var(--border);
-            border-right: 1px solid var(--border);
-            font-size: 12px;
-            color: var(--text-muted);
-            font-weight: 800;
-            text-align: center;
-            white-space: nowrap;
-        }
-        .calendar-table th:last-child { border-right: 0; }
-        .calendar-table td {
-            vertical-align: top;
-            height: 108px;
-            padding: 0;
-            border-right: 1px solid var(--border);
-            border-bottom: 1px solid var(--border);
-            background: #fff;
-        }
-        .calendar-table td:last-child { border-right: 0; }
-        .calendar-table tbody tr:last-child td { border-bottom: 0; }
-        .calendar-table td.calendar-empty { background: #f8fafc; }
-        .calendar-day {
-            min-height: 108px;
-            height: 100%;
-            padding: 8px;
-            background: #fff;
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-        .calendar-day.empty { background: #f8fafc; }
-        .calendar-day.today { box-shadow: inset 0 0 0 2px rgba(225, 29, 72, 0.25); }
-        .calendar-day-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-        .calendar-date { font-size: 13px; font-weight: 800; }
-        .calendar-date .weekday-mobile { display: none; color: var(--text-muted); font-weight: 600; margin-left: 4px; }
-        .day-add {
-            width: 28px;
-            height: 28px;
-            border-radius: 9px;
-            border: 1px solid var(--border);
-            background: #fff;
-            color: var(--accent);
-            cursor: pointer;
-            font-weight: 800;
-        }
-        .day-add:hover { background: #fff1f2; }
-        .calendar-card-list { display: flex; flex-direction: column; gap: 6px; }
-        .calendar-card {
-            border: 1px solid var(--border);
-            background: #f8fafc;
-            border-radius: 9px;
-            padding: 7px 8px;
-            cursor: pointer;
-            font-size: 12px;
-            line-height: 1.35;
-        }
-        .calendar-card:hover { background: #f1f5f9; }
-        .calendar-card strong { display: block; font-size: 12px; margin-bottom: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .calendar-more { font-size: 12px; color: var(--text-muted); font-weight: 700; padding: 2px 4px; }
-
-        /* Buttons */
-        .btn {
-            padding: 10px 18px;
-            border-radius: 10px;
-            border: none;
-            cursor: pointer;
-            font-weight: 800;
-            font-size: 14px;
-            transition: 0.2s;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 7px;
-            min-height: 42px;
-        }
-        .btn-primary { background: var(--accent); color: white; }
-        .btn-primary:hover { background: var(--accent-hover); }
-        .btn-sub { width: 100%; background: #f1f5f9; color: #475569; margin-top: 8px; justify-content: center; font-size: 13px; }
-        .btn-sub:hover { background: #e2e8f0; }
-        .btn-light { background: #f8fafc; color: #334155; border: 1px solid var(--border); }
-        .btn-light:hover { background: #f1f5f9; }
-        .btn-danger { background:#fee2e2; color:#ef4444; }
-        .btn-secondary { background:#eef2ff; color:#6366f1; }
-
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(15, 23, 42, 0.34);
-            backdrop-filter: blur(4px);
-            justify-content: center;
-            align-items: center;
-            padding: 18px;
-            z-index: 1000;
-        }
-        .modal.show { display: flex; }
-        .modal-content {
-            background: #fff;
-            padding: 28px;
-            border-radius: 18px;
-            width: 480px;
-            max-width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            border: 1px solid var(--border);
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.14);
-            max-height: 92vh;
-            overflow: auto;
-        }
-        .modal-header { font-size: 20px; font-weight: 800; margin-bottom: 2px; }
-        .form-group { display: flex; flex-direction: column; gap: 6px; }
-        .form-group label { font-size: 13px; font-weight: 800; color: #475569; }
-        .form-group input, .form-group select, .form-group textarea {
-            width: 100%;
-            padding: 11px 14px;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            font-size: 14px;
-            outline: none;
-            transition: 0.2s;
-            color: var(--text-dark);
-            background: #fff;
-        }
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .image-preview-wrap { display:none; margin-top:10px; position:relative; }
-        .image-preview-wrap img {
-            width: 100%;
-            height: auto;
-            max-height: 320px;
-            object-fit: contain;
-            object-position: center;
-            background: #f8fafc;
-            border-radius: 10px;
-            border: 1px solid var(--border);
-            cursor: zoom-in;
-            display: block;
-        }
-        .remove-image-btn { position:absolute; top:8px; right:8px; background:rgba(15,23,42,0.68); color:white; border:none; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size: 18px; line-height: 1; }
-        .modal-footer { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ContentFlow V2 — Glass Premium Red</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f7fb;--panel:#fff;--panel2:#f8fafc;--text:#172033;--muted:#7a8498;
+  --line:#e8ebf2;--primary:#ef4961;--primary2:#e53750;--soft:#fff0f3;
+  --green:#20b486;--amber:#f59e0b;--blue:#4f7cff;--purple:#8b5cf6;
+  --shadow:0 12px 30px rgba(23,32,51,.08);--sidebar:250px;--radius:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Sarabun',sans-serif}
+body{min-height:100vh;background:var(--bg);color:var(--text);display:flex;overflow-x:hidden}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.sidebar{width:var(--sidebar);height:100vh;position:sticky;top:0;background:#fff;border-right:1px solid var(--line);padding:20px 16px;display:flex;flex-direction:column;z-index:30}
+.brand{display:flex;align-items:center;gap:10px;padding:2px 8px 22px}
+.brand-mark{width:36px;height:36px;border-radius:12px;background:linear-gradient(145deg,var(--primary),#ff7a8c);display:grid;place-items:center;color:#fff;font-weight:800;box-shadow:0 8px 18px rgba(239,73,97,.25)}
+.brand h1{font-size:20px;line-height:1.1}.brand small{display:block;color:var(--muted);font-size:11px;margin-top:3px}
+.nav{display:flex;flex-direction:column;gap:4px;min-height:0;overflow:auto;padding-right:2px}
+.nav-label{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#9aa3b4;font-weight:800;padding:16px 10px 6px}
+.nav-btn,.project-item{border:0;background:transparent;width:100%;display:flex;align-items:center;gap:10px;padding:10px 11px;border-radius:11px;color:#566074;font-weight:600;text-align:left}
+.nav-btn:hover,.project-item:hover{background:#f6f7fa;color:var(--text)}
+.nav-btn.active,.project-item.active{background:var(--soft);color:var(--primary2)}
+.nav-icon{width:22px;text-align:center}
+.nav-text{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.count{min-width:25px;padding:2px 7px;border-radius:999px;background:#eef1f6;color:#6d7689;font-size:11px;text-align:center}
+.project-delete{border:0;background:transparent;color:#c6cad3;font-size:18px;width:24px;height:24px;border-radius:7px}
+.project-delete:hover{background:#ffe8ec;color:#e11d48}
+.add-project{margin:6px 0 0;border:1px dashed #d9dee8;background:#fff;color:#5e687b;padding:9px 10px;border-radius:10px;font-weight:700;width:100%}
+.add-project:hover{border-color:#f4a3af;color:var(--primary2);background:#fffafb}
+.sidebar-footer{margin-top:auto;padding-top:14px}
+.sync-pill{display:flex;align-items:center;gap:8px;background:#f6f7fa;border:1px solid var(--line);border-radius:12px;padding:9px 11px;font-size:11px;color:#5f687a}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--amber)}.dot.ok{background:var(--green)}.dot.error{background:#ef4444}
+.main{flex:1;min-width:0}
+.topbar{height:72px;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:20}
+.top-left{display:flex;align-items:center;gap:12px}.mobile-menu{display:none;border:1px solid var(--line);background:#fff;width:40px;height:40px;border-radius:11px}
+.page-title h2{font-size:20px}.page-title p{font-size:11px;color:var(--muted);margin-top:2px}
+.top-actions{display:flex;align-items:center;gap:10px}
+.btn{border:0;border-radius:11px;padding:10px 15px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:40px}
+.btn-primary{background:var(--primary);color:#fff;box-shadow:0 8px 18px rgba(239,73,97,.22)}.btn-primary:hover{background:var(--primary2)}
+.btn-light{background:#fff;border:1px solid var(--line);color:#4f596d}.btn-light:hover{background:#f8fafc}
+.btn-danger{background:#fff0f2;color:#dc2c45}.btn-secondary{background:#eef2ff;color:#4f62d9}
+.content{padding:24px 28px 40px;max-width:1600px;margin:0 auto}
+.view{display:none}.view.active{display:block}
+.toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:18px;flex-wrap:wrap}
+.filter-row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.filter-select,.search{height:40px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:0 12px;color:#4f596d;outline:none}
+.search{min-width:230px}.filter-select:focus,.search:focus{border-color:#f1a0ad;box-shadow:0 0 0 3px rgba(239,73,97,.08)}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:22px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:17px;box-shadow:0 2px 8px rgba(23,32,51,.02)}
+.kpi-top{display:flex;align-items:center;justify-content:space-between}.kpi-label{font-size:12px;color:var(--muted);font-weight:700}.kpi-icon{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:#f5f7fb}
+.kpi-value{font-size:28px;font-weight:800;margin-top:8px;letter-spacing:-.5px}.kpi-sub{font-size:11px;color:#9aa3b4;margin-top:2px}
+.dashboard-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:16px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}.panel-head h3{font-size:15px}.panel-head small{color:var(--muted)}
+.platform-bars{display:flex;flex-direction:column;gap:14px}.bar-row{display:grid;grid-template-columns:120px 1fr 40px;gap:12px;align-items:center;font-size:12px}
+.bar{height:8px;background:#eef1f5;border-radius:999px;overflow:hidden}.bar>span{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--primary),#ff8897)}
+.recent-list{display:flex;flex-direction:column;gap:10px}.recent-item{display:grid;grid-template-columns:42px 1fr auto;gap:10px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:12px}
+.recent-thumb{width:42px;height:42px;border-radius:10px;background:#f2f4f7;object-fit:cover}.recent-title{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.recent-meta{font-size:10px;color:var(--muted);margin-top:2px}
+.status-chip,.platform-chip{display:inline-flex;align-items:center;border-radius:999px;padding:4px 8px;font-size:10px;font-weight:800}
+.status-chip.idea{background:#f3e8ff;color:#7e22ce}.status-chip.doing{background:#fff7e6;color:#b45309}.status-chip.review{background:#eaf1ff;color:#315ed4}.status-chip.approved{background:#e9fff6;color:#087f5b}.status-chip.scheduled{background:#eef2ff;color:#4f46e5}.status-chip.done{background:#e8fff0;color:#18864b}
+.board-wrap{overflow-x:auto;padding-bottom:4px}.board{display:grid;grid-template-columns:repeat(6,minmax(250px,1fr));gap:14px;min-width:1540px}
+.column{background:#f0f2f6;border:1px solid #e6e9ef;border-radius:14px;padding:12px;min-height:340px}
+.column-head{display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:800;margin-bottom:10px}.column-head .count{background:#fff}
+.card-list{display:flex;flex-direction:column;gap:10px;min-height:80px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;box-shadow:0 2px 5px rgba(23,32,51,.025);cursor:pointer}
+.card:hover{transform:translateY(-1px);box-shadow:0 10px 22px rgba(23,32,51,.08)}
+.card-image{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:9px;margin-bottom:10px;background:#f3f4f6}.card-title{font-size:13px;font-weight:800;line-height:1.4}
+.card-project{font-size:10px;color:var(--muted);margin-top:4px}.card-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+.platform-chip{background:#f3f5f8;color:#5e6779}.platform-chip.facebook{background:#eaf2ff;color:#2765c7}.platform-chip.instagram{background:#fff0f6;color:#bd3a73}.platform-chip.tiktok{background:#f0f1f3;color:#111827}.platform-chip.lineoa{background:#e9fff0;color:#168a45}.platform-chip.website{background:#fff7e6;color:#a15a00}
+.card-foot{display:flex;align-items:center;justify-content:space-between;margin-top:10px;font-size:10px;color:var(--muted)}
+.calendar-panel{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.calendar-head{display:flex;align-items:center;justify-content:space-between;padding:15px;border-bottom:1px solid var(--line);gap:10px;flex-wrap:wrap}.calendar-head h3{font-size:16px}
+.calendar-scroll{overflow:auto}.calendar{width:100%;min-width:900px;border-collapse:collapse;table-layout:fixed}
+.calendar th{background:#f8f9fb;color:#7a8498;font-size:11px;padding:10px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.calendar td{height:125px;vertical-align:top;border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:7px}.calendar td:last-child,.calendar th:last-child{border-right:0}
+.day-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}.day-num{font-size:12px;font-weight:800}.day-add{width:24px;height:24px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--primary);font-weight:800}.today{box-shadow:inset 0 0 0 2px rgba(239,73,97,.28)}
+.cal-item{font-size:10px;padding:6px;border-radius:8px;background:#f6f7fa;border:1px solid var(--line);margin-bottom:5px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cal-item:hover{background:#fff0f3}
+.empty-day{background:#fafbfc}
+.modal{display:none;position:fixed;inset:0;background:rgba(18,24,38,.42);backdrop-filter:blur(4px);z-index:100;align-items:center;justify-content:center;padding:18px}.modal.show{display:flex}
+.composer{width:min(1120px,96vw);max-height:92vh;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 28px 80px rgba(15,23,42,.24);display:grid;grid-template-columns:1.25fr .75fr}
+.compose-form{padding:22px;overflow:auto}.compose-preview{background:#f7f8fb;border-left:1px solid var(--line);padding:22px;overflow:auto}
+.modal-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:0 -6px 18px;padding:6px;position:sticky;top:-22px;background:rgba(255,255,255,.97);backdrop-filter:blur(8px);z-index:8;border-bottom:1px solid transparent}.modal-head h3{font-size:18px}.close-btn{width:42px;height:42px;min-width:42px;flex:0 0 42px;border-radius:12px;border:1px solid #dfe4ec;background:#fff;color:#334155;display:inline-flex;align-items:center;justify-content:center;transition:.18s;box-shadow:0 2px 5px rgba(15,23,42,.04)}.close-btn:hover{background:#fff0f3;border-color:#f4a3af;color:var(--primary2)}.close-btn:focus-visible{outline:3px solid rgba(239,73,97,.18);outline-offset:2px}.close-btn svg{width:20px;height:20px;stroke:currentColor;stroke-width:2.4;fill:none;stroke-linecap:round}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}.field.full{grid-column:1/-1}.field label{font-size:11px;font-weight:800;color:#5e6779}
+.field input,.field select,.field textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 11px;outline:none;background:#fff;color:var(--text)}.field input:focus,.field select:focus,.field textarea:focus{border-color:#f1a0ad;box-shadow:0 0 0 3px rgba(239,73,97,.07)}
+.platform-selector{display:flex;gap:7px;flex-wrap:wrap}.plat-check{position:relative}.plat-check input{position:absolute;opacity:0;pointer-events:none}.plat-check label{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#fff;color:#5e6779;display:inline-flex;gap:6px;align-items:center;cursor:pointer;font-size:11px}.plat-check input:checked+label{border-color:#f4a3af;background:#fff3f5;color:var(--primary2)}
+.upload-box{border:1px dashed #cfd5df;border-radius:12px;padding:14px;background:#fafbfc}.upload-box input{border:0;padding:0;background:transparent}.upload-preview{margin-top:10px;display:none;position:relative}.upload-preview img{width:100%;max-height:260px;object-fit:contain;border-radius:10px;background:#f5f6f8}.remove-img{position:absolute;top:7px;right:7px;border:0;background:rgba(15,23,42,.7);color:#fff;width:28px;height:28px;border-radius:50%;font-size:18px}
+.compose-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;position:sticky;bottom:-22px;background:linear-gradient(to bottom,rgba(255,255,255,0),#fff 22%,#fff);padding:24px 0 4px;z-index:7}
+.preview-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.preview-tab{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 9px;font-size:10px;font-weight:800;color:#606a7d}.preview-tab.active{background:#fff0f3;color:var(--primary2);border-color:#f4a3af}
+.social-preview{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}.social-head{display:flex;align-items:center;gap:9px;padding:12px}.avatar{width:35px;height:35px;border-radius:50%;background:linear-gradient(145deg,var(--primary),#ff91a0);display:grid;place-items:center;color:#fff;font-weight:800}.social-name{font-size:12px;font-weight:800}.social-time{font-size:9px;color:var(--muted)}.preview-media{width:100%;aspect-ratio:1/1;background:#eef1f5;display:grid;place-items:center;color:#a5adbb;font-size:11px;object-fit:cover}.preview-caption{padding:12px;font-size:11px;white-space:pre-wrap;line-height:1.55;min-height:70px}
+.preview-note{font-size:10px;color:var(--muted);margin-top:10px;line-height:1.5}
+.image-viewer{display:none;position:fixed;inset:0;background:rgba(2,6,23,.92);z-index:200;align-items:center;justify-content:center;padding:24px}.image-viewer.show{display:flex}.image-viewer img{max-width:94vw;max-height:90vh;border-radius:12px}.viewer-close{position:fixed;top:20px;right:20px;width:42px;height:42px;border-radius:50%;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.4);color:#fff;font-size:25px}
+.loading{position:fixed;inset:0;background:#fff;z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center}.loading h1{color:var(--primary);font-size:28px}.loader{width:180px;height:4px;background:#eceff4;border-radius:999px;overflow:hidden;margin-top:14px}.loader span{display:block;width:45%;height:100%;background:var(--primary);animation:load 1.2s infinite ease-in-out}@keyframes load{from{transform:translateX(-100%)}to{transform:translateX(240%)}}
+.overlay{display:none}
+@media(max-width:1100px){.kpis{grid-template-columns:repeat(2,1fr)}.dashboard-grid{grid-template-columns:1fr}.composer{grid-template-columns:1fr}.compose-preview{border-left:0;border-top:1px solid var(--line)}}
+@media(max-width:760px){
+ body{display:block}.sidebar{position:fixed;left:0;top:0;transform:translateX(-105%);transition:.22s;box-shadow:var(--shadow)}body.menu-open .sidebar{transform:translateX(0)}
+ .overlay{display:block;position:fixed;inset:0;background:rgba(15,23,42,.3);z-index:25;opacity:0;pointer-events:none;transition:.2s}body.menu-open .overlay{opacity:1;pointer-events:auto}
+ .mobile-menu{display:block}.topbar{padding:0 14px;height:64px}.content{padding:16px 14px 30px}.page-title h2{font-size:17px}.page-title p{display:none}.top-actions .btn-light{display:none}
+ .kpis{grid-template-columns:repeat(2,1fr);gap:9px}.kpi{padding:13px}.kpi-value{font-size:23px}.form-grid{grid-template-columns:1fr}.composer{width:100%;max-height:94vh;border-radius:16px 16px 0 0}.modal{align-items:flex-end;padding:0}.compose-form,.compose-preview{padding:16px}.search{min-width:100%;width:100%}
+}
 
 
-        /* Image Viewer */
-        .image-viewer {
-            display: none;
-            position: fixed;
-            inset: 0;
-            z-index: 3000;
-            background: rgba(2, 6, 23, 0.92);
-            backdrop-filter: blur(6px);
-            align-items: center;
-            justify-content: center;
-            padding: 24px;
-        }
+/* =========================================================
+   ContentFlow V2 — Glass Red Theme
+   Visual layer only: preserves existing functionality/data flow
+   ========================================================= */
+:root{
+  --bg:#e8ebf0;
+  --panel:rgba(255,255,255,.64);
+  --panel2:rgba(255,255,255,.48);
+  --text:#17191f;
+  --muted:#747986;
+  --line:rgba(111,118,132,.16);
+  --primary:#d7193f;
+  --primary2:#b30f31;
+  --soft:rgba(215,25,63,.10);
+  --green:#1b8f68;
+  --amber:#d7193f;
+  --blue:#596579;
+  --purple:#7b4457;
+  --shadow:0 22px 60px rgba(28,31,38,.14);
+  --glass:rgba(255,255,255,.54);
+  --glass-strong:rgba(255,255,255,.72);
+  --glass-border:rgba(255,255,255,.70);
+  --glass-border-dark:rgba(111,118,132,.16);
+  --glass-shadow:0 20px 55px rgba(25,29,36,.12), inset 0 1px 0 rgba(255,255,255,.78);
+}
 
-        .image-viewer.show {
-            display: flex;
-        }
+html{background:#e7eaee}
+body{
+  position:relative;
+  isolation:isolate;
+  background:
+    radial-gradient(circle at 9% 13%, rgba(181,15,48,.20) 0 0, rgba(181,15,48,.11) 0 14%, transparent 34%),
+    radial-gradient(circle at 88% 18%, rgba(25,29,36,.14) 0 0, rgba(25,29,36,.07) 0 15%, transparent 34%),
+    radial-gradient(circle at 72% 82%, rgba(215,25,63,.11) 0 0, transparent 28%),
+    linear-gradient(135deg,#dde2e8 0%,#f8f9fb 44%,#e1e5ea 100%);
+  background-attachment:fixed;
+}
+body::before,
+body::after{
+  content:"";
+  position:fixed;
+  pointer-events:none;
+  z-index:-1;
+  border-radius:999px;
+  filter:blur(8px);
+}
+body::before{
+  width:360px;height:360px;left:22%;top:16%;
+  background:radial-gradient(circle,rgba(214,25,62,.18),rgba(214,25,62,.03) 56%,transparent 72%);
+}
+body::after{
+  width:430px;height:430px;right:3%;bottom:-8%;
+  background:radial-gradient(circle,rgba(36,39,47,.14),rgba(36,39,47,.02) 58%,transparent 74%);
+}
 
-        .image-viewer-content {
-            position: relative;
-            width: min(96vw, 1400px);
-            height: min(92vh, 1000px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+/* Glass shell */
+.sidebar,
+.topbar,
+.kpi,
+.panel,
+.calendar-panel,
+.column,
+.card,
+.composer,
+.social-preview,
+.sync-pill,
+.filter-select,
+.search,
+.btn-light,
+.add-project,
+.mobile-menu,
+.close-btn,
+.field input,
+.field select,
+.field textarea,
+.upload-box,
+.plat-check label,
+.preview-tab{
+  -webkit-backdrop-filter:blur(22px) saturate(145%);
+  backdrop-filter:blur(22px) saturate(145%);
+}
 
-        .image-viewer img {
-            max-width: 100%;
-            max-height: 100%;
-            width: auto;
-            height: auto;
-            object-fit: contain;
-            object-position: center;
-            border-radius: 12px;
-            box-shadow: 0 24px 60px rgba(0,0,0,0.45);
-            background: #0f172a;
-        }
+.sidebar{
+  background:linear-gradient(180deg,rgba(255,255,255,.64),rgba(246,247,249,.50));
+  border-right:1px solid var(--glass-border);
+  box-shadow:18px 0 50px rgba(25,29,36,.08), inset -1px 0 0 rgba(91,97,110,.08);
+}
+.topbar{
+  background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,.52));
+  border-bottom:1px solid var(--glass-border);
+  box-shadow:0 12px 32px rgba(25,29,36,.07), inset 0 -1px 0 rgba(91,97,110,.07);
+}
 
-        .image-viewer-close {
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            border: 1px solid rgba(255,255,255,0.25);
-            background: rgba(15,23,42,0.8);
-            color: #fff;
-            font-size: 28px;
-            line-height: 1;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1;
-        }
+.brand-mark{
+  background:linear-gradient(145deg,#ef3555 0%,#c81339 55%,#8f0c2a 100%);
+  border:1px solid rgba(255,255,255,.68);
+  box-shadow:0 12px 26px rgba(179,15,49,.28), inset 0 1px 0 rgba(255,255,255,.40);
+}
+.brand h1{color:#17191f;letter-spacing:-.4px}
+.brand small{color:#777d89}
+.nav-label{color:#8d929d}
+.nav-btn,.project-item{color:#5b606c}
+.nav-btn:hover,.project-item:hover{background:rgba(255,255,255,.52);color:#17191f;box-shadow:inset 0 0 0 1px rgba(255,255,255,.52)}
+.nav-btn.active,.project-item.active{
+  background:linear-gradient(135deg,rgba(215,25,63,.15),rgba(255,255,255,.44));
+  color:#a40f2f;
+  box-shadow:inset 0 0 0 1px rgba(215,25,63,.13),0 8px 18px rgba(126,23,43,.07);
+}
+.count{background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.65);color:#5e6470}
+.project-delete:hover{background:rgba(215,25,63,.12);color:#b10f31}
+.add-project{
+  background:rgba(255,255,255,.34);
+  border:1px dashed rgba(111,118,132,.30);
+  color:#535965;
+}
+.add-project:hover{background:rgba(255,255,255,.62);border-color:rgba(215,25,63,.42);color:#b30f31}
+.sync-pill{background:rgba(255,255,255,.44);border:1px solid rgba(255,255,255,.58);box-shadow:inset 0 1px 0 rgba(255,255,255,.68)}
+.dot{background:#d7193f;box-shadow:0 0 0 4px rgba(215,25,63,.10)}
+.dot.ok{background:#1b8f68;box-shadow:0 0 0 4px rgba(27,143,104,.10)}
+.dot.error{background:#b30f31;box-shadow:0 0 0 4px rgba(179,15,49,.10)}
 
-        .image-viewer-close:hover {
-            background: rgba(225,29,72,0.95);
-        }
+/* Typography + controls */
+.page-title h2{color:#181a20;letter-spacing:-.35px}
+.page-title p,.kpi-sub,.panel-head small,.recent-meta,.card-project,.card-foot,.preview-note{color:#777d89}
+.filter-select,.search,
+.field input,.field select,.field textarea{
+  background:rgba(255,255,255,.53);
+  border:1px solid rgba(255,255,255,.78);
+  box-shadow:inset 0 0 0 1px rgba(95,102,114,.07),0 8px 18px rgba(34,38,46,.04);
+  color:#24272e;
+}
+.filter-select:hover,.search:hover,
+.field input:hover,.field select:hover,.field textarea:hover{background:rgba(255,255,255,.66)}
+.filter-select:focus,.search:focus,
+.field input:focus,.field select:focus,.field textarea:focus{
+  border-color:rgba(215,25,63,.38);
+  box-shadow:0 0 0 4px rgba(215,25,63,.09),inset 0 0 0 1px rgba(255,255,255,.62);
+  background:rgba(255,255,255,.76);
+}
 
-        .image-viewer-caption {
-            position: absolute;
-            left: 12px;
-            right: 64px;
-            bottom: 10px;
-            color: #fff;
-            font-size: 14px;
-            font-weight: 700;
-            text-shadow: 0 2px 8px rgba(0,0,0,0.65);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
+.btn-primary{
+  background:linear-gradient(145deg,#e02749,#b90f34);
+  border:1px solid rgba(255,255,255,.28);
+  box-shadow:0 12px 26px rgba(179,15,49,.25),inset 0 1px 0 rgba(255,255,255,.25);
+}
+.btn-primary:hover{background:linear-gradient(145deg,#c91639,#9e0c2b);transform:translateY(-1px)}
+.btn-light{
+  background:rgba(255,255,255,.47);
+  border:1px solid rgba(255,255,255,.68);
+  color:#4e535d;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.62);
+}
+.btn-light:hover{background:rgba(255,255,255,.72);color:#1d2026}
+.btn-danger{background:rgba(215,25,63,.10);color:#b30f31;border:1px solid rgba(215,25,63,.10)}
+.btn-secondary{background:rgba(53,58,68,.08);color:#4d535f}
 
-        /* Loading Screen */
-        #loading-screen {
-            position: fixed;
-            inset: 0;
-            background: #ffffff;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-        }
-        .loader-bar { width: 180px; height: 4px; background: #e2e8f0; border-radius: 2px; overflow: hidden; margin-top: 16px; }
-        .loader-progress { width: 50%; height: 100%; background: var(--accent); animation: loading 1.5s infinite ease-in-out; }
-        @keyframes loading { 0% { transform: translateX(-100%); } 100% { transform: translateX(200%); } }
+/* Dashboard glass cards */
+.kpi,.panel,.calendar-panel{
+  background:linear-gradient(145deg,rgba(255,255,255,.69),rgba(255,255,255,.43));
+  border:1px solid var(--glass-border);
+  box-shadow:var(--glass-shadow);
+}
+.kpi{position:relative;overflow:hidden}
+.kpi::before,
+.panel::before,
+.calendar-panel::before,
+.composer::before{
+  content:"";
+  position:absolute;
+  left:18px;right:18px;top:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.95),transparent);
+  pointer-events:none;
+}
+.kpi-icon{background:linear-gradient(145deg,rgba(255,255,255,.82),rgba(215,25,63,.08));border:1px solid rgba(255,255,255,.76);color:#a30f2e}
+.kpi-value{color:#17191f}
+.bar{background:rgba(90,96,107,.11);box-shadow:inset 0 1px 2px rgba(25,29,36,.05)}
+.bar>span{background:linear-gradient(90deg,#9f0d2c,#d7193f 55%,#f14d68)}
+.recent-item{background:rgba(255,255,255,.42);border:1px solid rgba(255,255,255,.64);box-shadow:inset 0 1px 0 rgba(255,255,255,.48)}
+.recent-item:hover{background:rgba(255,255,255,.68)}
+.recent-thumb{background:rgba(255,255,255,.50);border:1px solid rgba(255,255,255,.58)}
 
-        @media (max-width: 1200px) {
-            .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-            .board-container { grid-template-columns: repeat(2, minmax(260px, 1fr)); }
-        }
+/* Status + platform chips: remove orange from theme */
+.status-chip.idea{background:rgba(89,101,121,.12);color:#4d5868}
+.status-chip.doing{background:rgba(29,32,39,.10);color:#30343b}
+.status-chip.review{background:rgba(215,25,63,.10);color:#b30f31}
+.status-chip.approved{background:rgba(27,143,104,.10);color:#146d51}
+.status-chip.scheduled{background:rgba(91,101,120,.11);color:#505a6b}
+.status-chip.done{background:rgba(27,143,104,.11);color:#176d52}
+.platform-chip{background:rgba(255,255,255,.50);border:1px solid rgba(255,255,255,.66);color:#575d68}
+.platform-chip.facebook{background:rgba(255,255,255,.52);color:#3b4657}
+.platform-chip.instagram{background:rgba(215,25,63,.08);color:#a20f2e}
+.platform-chip.tiktok{background:rgba(25,29,36,.08);color:#22262d}
+.platform-chip.lineoa{background:rgba(27,143,104,.09);color:#176e52}
+.platform-chip.website{background:rgba(94,101,113,.10);color:#4e5662}
 
-        @media (max-width: 768px) {
-            body {
-                display: block;
-                min-height: 100dvh;
-                height: auto;
-                overflow: auto;
-            }
-            .sidebar {
-                position: fixed;
-                top: 0;
-                left: 0;
-                bottom: 0;
-                width: min(86vw, 310px);
-                height: 100dvh;
-                margin-left: 0 !important;
-                transform: translateX(0);
-                box-shadow: var(--shadow);
-            }
-            body.sidebar-closed .sidebar { transform: translateX(-105%); }
-            .sidebar-overlay {
-                display: block;
-                position: fixed;
-                inset: 0;
-                background: rgba(15, 23, 42, 0.35);
-                z-index: 800;
-                opacity: 1;
-                pointer-events: auto;
-                transition: opacity 0.2s ease;
-            }
-            body.sidebar-closed .sidebar-overlay { opacity: 0; pointer-events: none; }
-            .main-content { min-height: 100dvh; overflow: visible; }
-            .header {
-                position: sticky;
-                top: 0;
-                z-index: 700;
-                padding: 12px 14px;
-            }
-            .header h3 { font-size: 18px; }
-            .header-subtitle { display: none; }
-            .header-actions .btn { padding: 10px 12px; }
-            .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 14px; gap: 10px; }
-            .sum-card { padding: 12px; border-radius: 12px; }
-            .sum-value { font-size: 24px; }
-            .view.active { display: block; }
-            .board-container { padding: 14px; display: grid; grid-template-columns: 1fr; gap: 14px; overflow: visible; }
-            .column { min-height: auto; max-height: none; padding: 14px; }
-            .card-list { overflow: visible; min-height: 50px; }
-            .card:hover { transform: none; }
-            .card-status-select { display: block; }
-            .calendar-view { padding: 14px; overflow: visible; }
-            .calendar-toolbar { align-items: flex-start; }
-            .calendar-actions { width: 100%; justify-content: space-between; }
-            .calendar-scroll-hint { display: block; }
-            .calendar-table-wrap { overflow-x: auto; border-top: 1px solid var(--border); }
-            .calendar-table { width: 760px; min-width: 760px; }
-            .calendar-table th { padding: 8px 6px; font-size: 11px; }
-            .calendar-table td { height: 118px; }
-            .calendar-day {
-                min-height: 118px;
-                border-right: 0;
-                padding: 8px;
-            }
-            .calendar-day.empty { display: flex; }
-            .calendar-date .weekday-mobile { display: inline; }
-            .day-add { width: 26px; height: 26px; }
-            .modal { align-items: flex-end; padding: 0; }
-            .modal-content {
-                width: 100%;
-                max-width: 100%;
-                border-radius: 20px 20px 0 0;
-                padding: 20px;
-                max-height: 92dvh;
-            }
-            .form-row { grid-template-columns: 1fr; }
-            .modal-footer { grid-template-columns: 1fr; }
-            .btn, .icon-btn, .menu-item, .form-group input, .form-group select, .form-group textarea { min-height: 44px; }
-        }
+/* Kanban */
+.board-wrap{padding:6px 2px 12px}
+.column{
+  background:linear-gradient(180deg,rgba(255,255,255,.38),rgba(245,247,249,.26));
+  border:1px solid rgba(255,255,255,.62);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.58),0 18px 44px rgba(25,29,36,.06);
+}
+.column-head{color:#363a43}
+.column-head .count{background:rgba(255,255,255,.62)}
+.card{
+  background:linear-gradient(145deg,rgba(255,255,255,.78),rgba(255,255,255,.52));
+  border:1px solid rgba(255,255,255,.82);
+  box-shadow:0 12px 28px rgba(27,31,38,.08),inset 0 1px 0 rgba(255,255,255,.80);
+}
+.card:hover{transform:translateY(-3px);box-shadow:0 18px 38px rgba(27,31,38,.13),inset 0 1px 0 rgba(255,255,255,.88)}
+.card-image{border:1px solid rgba(255,255,255,.72);box-shadow:0 8px 18px rgba(25,29,36,.08)}
 
-        @media (hover: none) and (pointer: coarse) {
-            .card:hover { transform: none; }
-            .card-status-select { display: block; }
-        }
-    </style>
+/* Calendar */
+.calendar-head{border-bottom:1px solid rgba(255,255,255,.62)}
+.calendar th{background:rgba(255,255,255,.38);border-color:rgba(107,114,128,.12);color:#656b76}
+.calendar td{background:rgba(255,255,255,.30);border-color:rgba(107,114,128,.11)}
+.calendar td:hover{background:rgba(255,255,255,.48)}
+.empty-day{background:rgba(226,229,234,.24)!important}
+.day-add{background:rgba(255,255,255,.52);border:1px solid rgba(255,255,255,.72);color:#b30f31}
+.today{box-shadow:inset 0 0 0 2px rgba(215,25,63,.34),inset 0 0 34px rgba(215,25,63,.04)}
+.cal-item{background:rgba(255,255,255,.56);border:1px solid rgba(255,255,255,.70);color:#3c414a;box-shadow:0 5px 12px rgba(25,29,36,.04)}
+.cal-item:hover{background:rgba(255,255,255,.82);color:#a10e2d}
+
+/* Modal / Create Post */
+.modal{
+  background:rgba(24,27,34,.34);
+  -webkit-backdrop-filter:blur(12px) saturate(112%);
+  backdrop-filter:blur(12px) saturate(112%);
+}
+.composer{
+  position:relative;
+  background:linear-gradient(145deg,rgba(255,255,255,.78),rgba(246,247,249,.58));
+  border:1px solid rgba(255,255,255,.76);
+  box-shadow:0 35px 90px rgba(20,23,29,.28),inset 0 1px 0 rgba(255,255,255,.90);
+}
+.compose-form{background:rgba(255,255,255,.12)}
+.compose-preview{
+  background:linear-gradient(180deg,rgba(33,36,43,.72),rgba(22,25,31,.64));
+  border-left:1px solid rgba(255,255,255,.13);
+  color:#fff;
+}
+.compose-preview .panel-head h3{color:#fff}
+.compose-preview .panel-head small,.compose-preview .preview-note{color:rgba(255,255,255,.58)}
+.close-btn{
+  background:rgba(255,255,255,.58)!important;
+  border:1px solid rgba(255,255,255,.82)!important;
+  color:#2e3239!important;
+  box-shadow:0 8px 18px rgba(25,29,36,.08),inset 0 1px 0 rgba(255,255,255,.76);
+}
+.close-btn:hover{background:rgba(215,25,63,.12)!important;border-color:rgba(215,25,63,.18)!important;color:#a30e2e!important;transform:translateY(-1px)}
+.plat-check label{background:rgba(255,255,255,.46);border:1px solid rgba(255,255,255,.72);color:#555b66}
+.plat-check input:checked+label{background:linear-gradient(145deg,rgba(215,25,63,.13),rgba(255,255,255,.54));border-color:rgba(215,25,63,.28);color:#a30f2e;box-shadow:0 7px 18px rgba(179,15,49,.08)}
+.upload-box{background:rgba(255,255,255,.35);border:1px dashed rgba(94,101,113,.28)}
+.upload-preview img{background:rgba(255,255,255,.42);border:1px solid rgba(255,255,255,.58)}
+.preview-tab{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.72)}
+.preview-tab:hover{background:rgba(255,255,255,.16)}
+.preview-tab.active{background:rgba(215,25,63,.24);border-color:rgba(245,101,126,.38);color:#fff}
+.social-preview{
+  background:linear-gradient(145deg,rgba(255,255,255,.88),rgba(255,255,255,.68));
+  border:1px solid rgba(255,255,255,.34);
+  color:#20232a;
+  box-shadow:0 18px 40px rgba(0,0,0,.20),inset 0 1px 0 rgba(255,255,255,.90);
+}
+.avatar{background:linear-gradient(145deg,#e52c4e,#a80d30);border:1px solid rgba(255,255,255,.54);box-shadow:0 8px 18px rgba(165,12,47,.20)}
+.preview-media{background:linear-gradient(135deg,#eceff3,#dfe3e8);color:#8b919c}
+
+/* Loading + overlays */
+.loading{
+  background:
+    radial-gradient(circle at 30% 30%,rgba(215,25,63,.12),transparent 32%),
+    linear-gradient(135deg,#eef1f4,#fafbfc 52%,#e4e7eb);
+}
+.loader{background:rgba(92,99,112,.12)}
+.loader span{background:linear-gradient(90deg,#9f0d2c,#d7193f,#f04b66)}
+.overlay{background:rgba(20,23,29,.28)}
+
+/* Scrollbars */
+*{scrollbar-width:thin;scrollbar-color:rgba(106,112,123,.34) transparent}
+*::-webkit-scrollbar{width:9px;height:9px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:rgba(106,112,123,.28);border:2px solid transparent;background-clip:padding-box;border-radius:999px}
+*::-webkit-scrollbar-thumb:hover{background:rgba(179,15,49,.34);border:2px solid transparent;background-clip:padding-box}
+
+@media(max-width:760px){
+  .sidebar{background:linear-gradient(180deg,rgba(255,255,255,.82),rgba(244,246,248,.72));}
+  .composer{background:linear-gradient(160deg,rgba(255,255,255,.88),rgba(242,244,247,.76));}
+  .compose-preview{background:linear-gradient(180deg,rgba(29,32,39,.88),rgba(18,20,25,.82));}
+}
+
+
+/* =========================================================
+   Glass Premium Refinement v2
+   - round sticky composer header/actions
+   - reliable internal modal scrolling
+   - stronger gray/red glass depth on main workspace
+   ========================================================= */
+body{
+  background:
+    radial-gradient(circle at 8% 10%, rgba(174,13,47,.30) 0%, rgba(174,13,47,.10) 18%, transparent 38%),
+    radial-gradient(circle at 88% 12%, rgba(30,34,42,.34) 0%, rgba(30,34,42,.09) 19%, transparent 39%),
+    radial-gradient(circle at 80% 88%, rgba(137,12,40,.22) 0%, transparent 30%),
+    linear-gradient(135deg,#b5bac2 0%,#d9dce1 31%,#eef0f3 55%,#aeb4bd 100%);
+  background-attachment:fixed;
+}
+body::before{
+  width:440px;height:440px;left:18%;top:10%;
+  background:radial-gradient(circle,rgba(215,25,63,.20),rgba(215,25,63,.04) 54%,transparent 72%);
+  filter:blur(18px);
+}
+body::after{
+  width:520px;height:520px;right:-4%;bottom:-10%;
+  background:radial-gradient(circle,rgba(28,32,40,.22),rgba(28,32,40,.03) 57%,transparent 74%);
+  filter:blur(22px);
+}
+.main{position:relative;isolation:isolate}
+.main::before{
+  content:"";position:fixed;inset:72px 0 0 var(--sidebar);pointer-events:none;z-index:-1;
+  background:linear-gradient(135deg,rgba(255,255,255,.10),rgba(34,38,46,.04));
+}
+.sidebar{
+  background:linear-gradient(180deg,rgba(245,247,249,.48),rgba(215,219,225,.30));
+  border-right:1px solid rgba(255,255,255,.54);
+  box-shadow:22px 0 54px rgba(22,25,31,.13),inset -1px 0 0 rgba(255,255,255,.48);
+}
+.topbar{
+  background:linear-gradient(180deg,rgba(242,244,247,.48),rgba(219,223,229,.30));
+  border-bottom:1px solid rgba(255,255,255,.56);
+  box-shadow:0 16px 38px rgba(22,25,31,.10),inset 0 1px 0 rgba(255,255,255,.58);
+}
+.kpi,.panel,.calendar-panel{
+  background:linear-gradient(145deg,rgba(246,248,250,.47),rgba(213,217,224,.24));
+  border:1px solid rgba(255,255,255,.58);
+  box-shadow:0 22px 58px rgba(23,27,34,.12),inset 0 1px 0 rgba(255,255,255,.70);
+}
+.column{
+  background:linear-gradient(180deg,rgba(237,240,244,.31),rgba(195,201,210,.18));
+  border-color:rgba(255,255,255,.48);
+}
+.card{
+  background:linear-gradient(145deg,rgba(250,251,252,.62),rgba(220,224,230,.35));
+  border-color:rgba(255,255,255,.66);
+}
+.filter-select,.search,.field input,.field select,.field textarea{
+  background:linear-gradient(145deg,rgba(249,250,252,.54),rgba(218,222,228,.28));
+  border-color:rgba(255,255,255,.64);
+}
+.btn-light,.add-project,.mobile-menu{
+  background:linear-gradient(145deg,rgba(248,249,251,.52),rgba(210,215,222,.25));
+  border-color:rgba(255,255,255,.58);
+}
+.nav-btn:hover,.project-item:hover{background:rgba(245,247,249,.38)}
+.nav-btn.active,.project-item.active{
+  background:linear-gradient(135deg,rgba(181,15,48,.20),rgba(238,240,243,.28));
+  box-shadow:inset 0 0 0 1px rgba(215,25,63,.15),0 12px 24px rgba(97,13,32,.10);
+}
+
+/* Composer: true fixed-height glass window with independent scrolling */
+.modal{
+  padding:clamp(12px,2vw,24px);
+  align-items:center;
+  overflow:hidden;
+}
+.composer{
+  width:min(1180px,96vw);
+  height:min(92vh,900px);
+  height:min(92dvh,900px);
+  max-height:none;
+  min-height:0;
+  overflow:hidden;
+  border-radius:26px;
+  grid-template-columns:minmax(0,1.25fr) minmax(300px,.75fr);
+  background:linear-gradient(145deg,rgba(236,239,243,.62),rgba(188,194,203,.38));
+  border:1px solid rgba(255,255,255,.72);
+  box-shadow:0 42px 110px rgba(18,21,27,.34),inset 0 1px 0 rgba(255,255,255,.82);
+}
+.compose-form,.compose-preview{
+  min-width:0;
+  min-height:0;
+  height:100%;
+  overflow-y:auto;
+  overflow-x:hidden;
+  overscroll-behavior:contain;
+  scrollbar-gutter:stable;
+}
+.compose-form{
+  padding:22px;
+  background:linear-gradient(145deg,rgba(255,255,255,.20),rgba(214,218,224,.12));
+}
+.compose-preview{
+  background:linear-gradient(180deg,rgba(38,42,50,.76),rgba(20,23,29,.70));
+}
+.modal-head{
+  position:sticky;
+  top:0;
+  z-index:20;
+  margin:0 0 20px;
+  padding:14px 16px;
+  min-height:66px;
+  border-radius:20px;
+  border:1px solid rgba(255,255,255,.68);
+  background:linear-gradient(145deg,rgba(250,251,252,.60),rgba(205,210,217,.34));
+  -webkit-backdrop-filter:blur(28px) saturate(150%);
+  backdrop-filter:blur(28px) saturate(150%);
+  box-shadow:0 14px 34px rgba(27,31,38,.12),inset 0 1px 0 rgba(255,255,255,.84);
+}
+.modal-head::after{
+  content:"";position:absolute;left:18px;right:18px;top:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.95),transparent);
+  pointer-events:none;
+}
+.close-btn{
+  background:linear-gradient(145deg,rgba(255,255,255,.68),rgba(215,219,225,.42))!important;
+  border:1px solid rgba(255,255,255,.74)!important;
+  border-radius:14px!important;
+  box-shadow:0 8px 20px rgba(25,29,36,.10),inset 0 1px 0 rgba(255,255,255,.82)!important;
+}
+.compose-actions{
+  position:sticky;
+  bottom:0;
+  z-index:20;
+  margin:20px 0 0;
+  padding:12px;
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.62);
+  background:linear-gradient(145deg,rgba(246,248,250,.66),rgba(205,210,217,.40));
+  -webkit-backdrop-filter:blur(28px) saturate(145%);
+  backdrop-filter:blur(28px) saturate(145%);
+  box-shadow:0 -10px 32px rgba(28,31,38,.09),inset 0 1px 0 rgba(255,255,255,.76);
+}
+#f-caption{min-height:160px;resize:vertical}
+#f-note{min-height:96px;resize:vertical}
+
+/* Make the glass effect visible inside forms instead of solid white slabs */
+.field input,.field select,.field textarea,.upload-box,.plat-check label{
+  background:linear-gradient(145deg,rgba(250,251,252,.58),rgba(215,220,226,.30));
+  border:1px solid rgba(255,255,255,.66);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.54),0 8px 18px rgba(26,30,37,.04);
+}
+.field input:focus,.field select:focus,.field textarea:focus{
+  background:linear-gradient(145deg,rgba(255,255,255,.72),rgba(225,228,233,.42));
+}
+
+@media(max-width:1100px){
+  .composer{
+    grid-template-columns:1fr;
+    height:min(94vh,940px);
+    height:min(94dvh,940px);
+    overflow-y:auto;
+  }
+  .compose-form,.compose-preview{height:auto;overflow:visible}
+  .compose-preview{border-left:0;border-top:1px solid rgba(255,255,255,.18)}
+  .modal-head{top:0}
+
+  /* In stacked layout, keep actions in document flow so they never float over Preview. */
+  .compose-actions{
+    position:static;
+    bottom:auto;
+    margin-top:20px;
+  }
+}
+@media(max-width:760px){
+  .modal{align-items:flex-end;padding:0;overflow:hidden}
+  .composer{
+    width:100%;height:96vh;height:96dvh;max-height:96dvh;
+    border-radius:24px 24px 0 0;
+    overflow-y:auto;
+  }
+  .compose-form,.compose-preview{padding:16px}
+  .modal-head{border-radius:18px;padding:12px 14px}
+  .compose-actions{position:static;bottom:auto;border-radius:16px}
+  .main::before{inset:64px 0 0 0}
+}
+
+
+
+/* === Composer layout v3: independent header / scrollable body / fixed footer === */
+#composer-modal{overflow:hidden!important}
+#composer-modal .composer{
+  display:flex!important;
+  flex-direction:column!important;
+  width:min(1180px,96vw)!important;
+  height:min(92dvh,900px)!important;
+  max-height:min(92dvh,900px)!important;
+  min-height:0!important;
+  overflow:hidden!important;
+  border-radius:26px!important;
+}
+#composer-modal .composer-header{
+  position:relative!important;
+  top:auto!important;
+  flex:0 0 auto!important;
+  margin:14px 14px 10px!important;
+  min-height:66px!important;
+  border-radius:20px!important;
+}
+#composer-modal .composer-body{
+  flex:1 1 auto!important;
+  min-height:0!important;
+  display:grid!important;
+  grid-template-columns:minmax(0,1.25fr) minmax(300px,.75fr)!important;
+  overflow:hidden!important;
+}
+#composer-modal .compose-form,
+#composer-modal .compose-preview{
+  position:relative!important;
+  inset:auto!important;
+  transform:none!important;
+  margin:0!important;
+  min-width:0!important;
+  min-height:0!important;
+  height:100%!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  overscroll-behavior:contain!important;
+}
+#composer-modal .compose-form{padding:18px 22px 24px!important}
+#composer-modal .compose-preview{padding:22px!important}
+#composer-modal .composer-footer{
+  position:relative!important;
+  inset:auto!important;
+  bottom:auto!important;
+  flex:0 0 auto!important;
+  margin:10px 14px 14px!important;
+  padding:12px!important;
+  min-height:64px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:8px!important;
+  border-radius:18px!important;
+  z-index:30!important;
+}
+#composer-modal .composer-footer .btn{min-height:42px}
+#composer-modal #delete-btn{margin-right:auto!important}
+
+@media(max-width:1100px){
+  #composer-modal .composer{
+    width:min(940px,96vw)!important;
+    height:min(94dvh,940px)!important;
+    max-height:min(94dvh,940px)!important;
+  }
+  #composer-modal .composer-body{
+    display:block!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+  }
+  #composer-modal .compose-form,
+  #composer-modal .compose-preview{
+    height:auto!important;
+    overflow:visible!important;
+  }
+  #composer-modal .compose-preview{
+    border-left:0!important;
+    border-top:1px solid rgba(255,255,255,.18)!important;
+  }
+}
+
+@media(max-width:760px){
+  #composer-modal{align-items:flex-end!important;padding:0!important}
+  #composer-modal .composer{
+    width:100%!important;
+    height:96dvh!important;
+    max-height:96dvh!important;
+    border-radius:24px 24px 0 0!important;
+  }
+  #composer-modal .composer-header{margin:10px 10px 8px!important}
+  #composer-modal .compose-form,#composer-modal .compose-preview{padding:16px!important}
+  #composer-modal .composer-footer{
+    margin:8px 10px 10px!important;
+    flex-wrap:wrap!important;
+  }
+  #composer-modal .composer-footer .btn{flex:1 1 auto!important}
+  #composer-modal #delete-btn{flex:0 0 100%!important;margin-right:0!important}
+}
+
+</style>
 </head>
-<body class="sidebar-closed">
+<body>
+<div class="loading" id="loading">
+  <h1>ContentFlow V2</h1><div class="loader"><span></span></div>
+  <p style="margin-top:10px;color:#8a93a4;font-size:11px">กำลังโหลดข้อมูลจาก Google Sheets...</p>
+</div>
 
-    <div id="loading-screen">
-        <h1 style="font-size: 30px; font-weight: 800; color: #e11d48;">ContentFlow</h1>
-        <div class="loader-bar"><div class="loader-progress"></div></div>
-        <p style="margin-top: 12px; color: var(--text-muted); font-size: 13px;">กำลังโหลดข้อมูลจาก Google Sheets...</p>
+<div class="overlay" onclick="toggleMenu(false)"></div>
+
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-mark">CF</div>
+    <div><h1>ContentFlow</h1><small>Social Content Manager</small></div>
+  </div>
+  <div class="nav">
+    <div class="nav-label">Workspace</div>
+    <button class="nav-btn active" id="nav-dashboard" onclick="switchView('dashboard')"><span class="nav-icon">◫</span><span class="nav-text">Dashboard</span></button>
+    <button class="nav-btn" id="nav-calendar" onclick="switchView('calendar')"><span class="nav-icon">▦</span><span class="nav-text">Content Calendar</span></button>
+    <button class="nav-btn" id="nav-board" onclick="switchView('board')"><span class="nav-icon">☷</span><span class="nav-text">Kanban Board</span></button>
+    <button class="nav-btn" onclick="openComposer()"><span class="nav-icon">＋</span><span class="nav-text">Create Post</span></button>
+
+    <div class="nav-label">Project</div>
+    <div id="project-list"></div>
+    <button class="add-project" onclick="promptNewProject()">+ เพิ่ม Project</button>
+
+    <div class="nav-label">Workflow</div>
+    <button class="nav-btn" onclick="setStatusFilter('review')"><span class="nav-icon">◌</span><span class="nav-text">Waiting Review</span><span class="count" id="wf-review">0</span></button>
+    <button class="nav-btn" onclick="setStatusFilter('approved')"><span class="nav-icon">✓</span><span class="nav-text">Approved</span><span class="count" id="wf-approved">0</span></button>
+    <button class="nav-btn" onclick="setStatusFilter('scheduled')"><span class="nav-icon">◷</span><span class="nav-text">Scheduled</span><span class="count" id="wf-scheduled">0</span></button>
+    <button class="nav-btn" onclick="setStatusFilter('done')"><span class="nav-icon">●</span><span class="nav-text">Published</span><span class="count" id="wf-done">0</span></button>
+  </div>
+  <div class="sidebar-footer">
+    <div class="sync-pill"><span class="dot" id="sync-dot"></span><span id="sync-text">กำลังเชื่อมต่อ...</span></div>
+  </div>
+</aside>
+
+<main class="main">
+  <header class="topbar">
+    <div class="top-left">
+      <button class="mobile-menu" onclick="toggleMenu()">☰</button>
+      <div class="page-title"><h2 id="page-title">Dashboard</h2><p id="page-subtitle">ภาพรวมแผนคอนเทนต์ทุก Project</p></div>
+    </div>
+    <div class="top-actions">
+      <button class="btn btn-light" onclick="loadData()">↻ Sync</button>
+      <button class="btn btn-primary" onclick="openComposer()">+ Create Post</button>
+    </div>
+  </header>
+
+  <div class="content">
+    <div class="toolbar">
+      <div class="filter-row">
+        <select class="filter-select" id="filter-project" onchange="onProjectFilterChange(this.value)"></select>
+        <select class="filter-select" id="filter-platform" onchange="setPlatformFilter(this.value)">
+          <option value="all">All Platform</option>
+          <option>Facebook</option><option>Instagram</option><option>TikTok</option><option>LINE OA</option><option>Website</option>
+        </select>
+        <select class="filter-select" id="filter-status" onchange="setStatusFilter(this.value,false)">
+          <option value="all">All Status</option>
+          <option value="idea">Idea</option><option value="doing">Creating</option><option value="review">Review</option>
+          <option value="approved">Approved</option><option value="scheduled">Scheduled</option><option value="done">Published</option>
+        </select>
+        <input class="search" id="search-input" type="search" placeholder="ค้นหา Content / Campaign..." oninput="setSearch(this.value)">
+      </div>
+      <button class="btn btn-light" onclick="clearFilters()">ล้าง Filter</button>
     </div>
 
-    <div class="sidebar-overlay" onclick="toggleSidebar(false)" aria-hidden="true"></div>
-
-    <aside class="sidebar" aria-label="เมนูหลัก">
-        <div class="sidebar-content">
-            <div class="sidebar-header">
-                <div class="logo-area">
-                    <h2>ContentFlow</h2>
-                    <p>sync กับ Google Sheets</p>
-                </div>
-                <button class="icon-btn" id="sidebar-toggle-sidebar" onclick="toggleSidebar(false)" aria-label="ปิดเมนู" aria-expanded="true">×</button>
-            </div>
-
-            <div class="nav-group" data-section="views">
-                <button class="section-toggle" type="button" onclick="toggleSection('views')">
-                    <span>มุมมอง</span><span class="chevron">▾</span>
-                </button>
-                <div class="section-body">
-                    <button class="menu-item active" id="nav-board" type="button" onclick="switchView('board')">
-                        <span>📋</span><span class="menu-text">Schedule Flow</span>
-                    </button>
-                    <button class="menu-item" id="nav-calendar" type="button" onclick="switchView('calendar')">
-                        <span>📅</span><span class="menu-text">ปฏิทินรายเดือน</span>
-                    </button>
-                </div>
-            </div>
-
-            <div class="nav-group" data-section="accounts">
-                <button class="section-toggle" type="button" onclick="toggleSection('accounts')">
-                    <span>บัญชีของฉัน</span><span class="chevron">▾</span>
-                </button>
-                <div class="section-body">
-                    <div id="account-list" style="display: flex; flex-direction: column; gap: 2px;"></div>
-                    <button class="btn btn-sub" type="button" onclick="promptNewAccount()">+ เพิ่มบัญชีใหม่</button>
-                </div>
-            </div>
+    <section class="view active" id="dashboard-view">
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-top"><div class="kpi-label">Content ทั้งหมด</div><div class="kpi-icon">☷</div></div><div class="kpi-value" id="kpi-all">0</div><div class="kpi-sub">ตาม Filter ปัจจุบัน</div></div>
+        <div class="kpi"><div class="kpi-top"><div class="kpi-label">Waiting Review</div><div class="kpi-icon">◌</div></div><div class="kpi-value" id="kpi-review">0</div><div class="kpi-sub">รอตรวจงาน</div></div>
+        <div class="kpi"><div class="kpi-top"><div class="kpi-label">Scheduled</div><div class="kpi-icon">◷</div></div><div class="kpi-value" id="kpi-scheduled">0</div><div class="kpi-sub">เตรียมเผยแพร่</div></div>
+        <div class="kpi"><div class="kpi-top"><div class="kpi-label">Published</div><div class="kpi-icon">✓</div></div><div class="kpi-value" id="kpi-done">0</div><div class="kpi-sub">เผยแพร่แล้ว</div></div>
+      </div>
+      <div class="dashboard-grid">
+        <div class="panel">
+          <div class="panel-head"><div><h3>Content by Platform</h3><small>จำนวน Content ตามช่องทาง</small></div></div>
+          <div class="platform-bars" id="platform-bars"></div>
         </div>
-
-        <div class="sidebar-footer">
-            <div class="status-pill" title="สถานะการเชื่อมต่อ">
-                <span id="status-dot" class="status-dot loading"></span>
-                <span id="status-text">กำลังเชื่อมต่อ...</span>
-            </div>
+        <div class="panel">
+          <div class="panel-head"><div><h3>Upcoming Content</h3><small>งานใกล้ถึงกำหนด</small></div></div>
+          <div class="recent-list" id="recent-list"></div>
         </div>
-    </aside>
+      </div>
+    </section>
 
-    <main class="main-content">
-        <header class="header">
-            <div class="header-left">
-                <button class="icon-btn" id="sidebar-toggle-main" onclick="toggleSidebar()" aria-label="เปิด/ปิดเมนู" aria-expanded="false">☰</button>
-                <div class="header-title-wrap">
-                    <h3 id="current-board-title">Schedule Flow</h3>
-                    <p class="header-subtitle" id="view-description">จัดการแผนคอนเทนต์แบบ Kanban และปฏิทิน</p>
-                </div>
-            </div>
-            <div class="header-actions">
-                <button class="btn btn-primary" type="button" onclick="openCardModal()">+ เพิ่มงาน</button>
-            </div>
-        </header>
-
-        <section class="summary-grid" aria-label="สรุปงาน">
-            <div class="sum-card all"><div class="sum-title">งานทั้งหมด</div><div class="sum-value" id="sum-all">0</div></div>
-            <div class="sum-card done-all"><div class="sum-title">ลงแล้ว</div><div class="sum-value" id="sum-done">0</div></div>
-            <div class="sum-card week"><div class="sum-title">ใน 7 วัน</div><div class="sum-value" id="sum-week">0</div></div>
-            <div class="sum-card over"><div class="sum-title">เกินกำหนด</div><div class="sum-value" id="sum-over">0</div></div>
-        </section>
-
-        <section class="view active" id="kanban-view" aria-label="Schedule Flow Kanban">
-            <div class="board-container">
-                <div class="column"><div class="column-header">🟣 ไอเดีย <span class="count" id="count-idea">0</span></div><div class="card-list" id="list-idea" ondragover="allowDrop(event)" ondrop="drop(event, 'idea')"></div></div>
-                <div class="column"><div class="column-header">🟠 กำลังทำ <span class="count" id="count-doing">0</span></div><div class="card-list" id="list-doing" ondragover="allowDrop(event)" ondrop="drop(event, 'doing')"></div></div>
-                <div class="column"><div class="column-header">🔵 รอตรวจงาน <span class="count" id="count-review">0</span></div><div class="card-list" id="list-review" ondragover="allowDrop(event)" ondrop="drop(event, 'review')"></div></div>
-                <div class="column"><div class="column-header">🟢 ลงแล้ว <span class="count" id="count-done">0</span></div><div class="card-list" id="list-done" ondragover="allowDrop(event)" ondrop="drop(event, 'done')"></div></div>
-            </div>
-        </section>
-
-        <section class="view calendar-view" id="calendar-view" aria-label="ปฏิทินรายเดือน">
-            <div class="calendar-panel">
-                <div class="calendar-toolbar">
-                    <div class="calendar-title" id="calendar-title">ปฏิทินรายเดือน</div>
-                    <div class="calendar-actions">
-                        <button class="btn btn-light" type="button" onclick="changeMonth(-1)">‹ เดือนก่อน</button>
-                        <button class="btn btn-light" type="button" onclick="goToday()">วันนี้</button>
-                        <button class="btn btn-light" type="button" onclick="changeMonth(1)">เดือนถัดไป ›</button>
-                    </div>
-                </div>
-                <p class="calendar-scroll-hint">เลื่อนซ้าย-ขวาเพื่อดูตารางครบ 7 วันบนมือถือ</p>
-                <div class="calendar-table-wrap">
-                    <table class="calendar-table" aria-label="ตารางปฏิทินรายเดือน">
-                        <thead>
-                            <tr>
-                                <th scope="col">อาทิตย์</th>
-                                <th scope="col">จันทร์</th>
-                                <th scope="col">อังคาร</th>
-                                <th scope="col">พุธ</th>
-                                <th scope="col">พฤหัส</th>
-                                <th scope="col">ศุกร์</th>
-                                <th scope="col">เสาร์</th>
-                            </tr>
-                        </thead>
-                        <tbody id="calendar-grid"></tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-    </main>
-
-
-    <div class="image-viewer" id="image-viewer" role="dialog" aria-modal="true" aria-label="ดูรูปภาพขนาดเต็ม">
-        <div class="image-viewer-content">
-            <button
-                class="image-viewer-close"
-                type="button"
-                aria-label="ปิดรูปภาพ"
-                onclick="closeImageViewer()"
-            >×</button>
-            <img id="image-viewer-img" src="" alt="รูปภาพขนาดเต็ม">
-            <div class="image-viewer-caption" id="image-viewer-caption"></div>
+    <section class="view" id="board-view">
+      <div class="board-wrap">
+        <div class="board">
+          <div class="column"><div class="column-head"><span>💡 Idea</span><span class="count" id="count-idea">0</span></div><div class="card-list" id="list-idea" ondragover="allowDrop(event)" ondrop="dropCard(event,'idea')"></div></div>
+          <div class="column"><div class="column-head"><span>✏️ Creating</span><span class="count" id="count-doing">0</span></div><div class="card-list" id="list-doing" ondragover="allowDrop(event)" ondrop="dropCard(event,'doing')"></div></div>
+          <div class="column"><div class="column-head"><span>👀 Review</span><span class="count" id="count-review">0</span></div><div class="card-list" id="list-review" ondragover="allowDrop(event)" ondrop="dropCard(event,'review')"></div></div>
+          <div class="column"><div class="column-head"><span>✅ Approved</span><span class="count" id="count-approved">0</span></div><div class="card-list" id="list-approved" ondragover="allowDrop(event)" ondrop="dropCard(event,'approved')"></div></div>
+          <div class="column"><div class="column-head"><span>🕒 Scheduled</span><span class="count" id="count-scheduled">0</span></div><div class="card-list" id="list-scheduled" ondragover="allowDrop(event)" ondrop="dropCard(event,'scheduled')"></div></div>
+          <div class="column"><div class="column-head"><span>🟢 Published</span><span class="count" id="count-done">0</span></div><div class="card-list" id="list-done" ondragover="allowDrop(event)" ondrop="dropCard(event,'done')"></div></div>
         </div>
+      </div>
+    </section>
+
+    <section class="view" id="calendar-view">
+      <div class="calendar-panel">
+        <div class="calendar-head">
+          <h3 id="calendar-title">Content Calendar</h3>
+          <div class="filter-row"><button class="btn btn-light" onclick="changeMonth(-1)">‹ เดือนก่อน</button><button class="btn btn-light" onclick="goToday()">วันนี้</button><button class="btn btn-light" onclick="changeMonth(1)">เดือนถัดไป ›</button></div>
+        </div>
+        <div class="calendar-scroll">
+          <table class="calendar">
+            <thead><tr><th>อาทิตย์</th><th>จันทร์</th><th>อังคาร</th><th>พุธ</th><th>พฤหัส</th><th>ศุกร์</th><th>เสาร์</th></tr></thead>
+            <tbody id="calendar-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<div class="modal" id="composer-modal" role="dialog" aria-modal="true" aria-labelledby="composer-title">
+  <div class="composer">
+    <div class="modal-head composer-header">
+      <div>
+        <h3 id="composer-title">Create Post</h3>
+        <div style="font-size:10px;color:#8a93a4;margin-top:2px">สร้างและจัดการ Content จากจุดเดียว</div>
+      </div>
+      <button class="close-btn" type="button" onclick="closeComposer()" aria-label="ปิดหน้าต่าง Create Post" title="ปิด">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6L18 18M18 6L6 18"></path></svg>
+      </button>
     </div>
 
-    <div class="modal" id="card-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-        <div class="modal-content">
-            <div class="modal-header" id="modal-title">แก้ไขงาน</div>
-            <div class="form-group"><label for="f-title">ชื่องาน / หัวข้อ</label><input type="text" id="f-title" placeholder="เช่น รีวิวร้านอาหารแถวสาย 5"></div>
-            <div class="form-row">
-                <div class="form-group"><label for="f-plat">แพลตฟอร์ม</label><select id="f-plat"><option value="TikTok">TikTok</option><option value="Facebook">Facebook</option><option value="Instagram">Instagram</option></select></div>
-                <div class="form-group"><label for="f-status">สถานะ</label><select id="f-status"><option value="idea">ไอเดีย</option><option value="doing">กำลังทำ</option><option value="review">รอตรวจงาน</option><option value="done">ลงแล้ว</option></select></div>
+    <div class="composer-body">
+      <div class="compose-form">
+        <div class="form-grid">
+          <div class="field"><label>Project</label><select id="f-project"></select></div>
+          <div class="field"><label>Campaign</label><input id="f-campaign" placeholder="เช่น Pre-sale Nov 2026"></div>
+          <div class="field"><label>Content Pillar</label><select id="f-pillar"><option value="">เลือก Pillar</option><option>Promotion</option><option>Product</option><option>Location</option><option>Lifestyle</option><option>Education</option><option>Event</option><option>Brand</option><option>Other</option></select></div>
+          <div class="field"><label>Status</label><select id="f-status"><option value="idea">Idea</option><option value="doing">Creating</option><option value="review">Review</option><option value="approved">Approved</option><option value="scheduled">Scheduled</option><option value="done">Published</option></select></div>
+          <div class="field full"><label>Platform</label>
+            <div class="platform-selector">
+              <div class="plat-check"><input type="checkbox" id="p-facebook" value="Facebook"><label for="p-facebook">Facebook</label></div>
+              <div class="plat-check"><input type="checkbox" id="p-instagram" value="Instagram"><label for="p-instagram">Instagram</label></div>
+              <div class="plat-check"><input type="checkbox" id="p-tiktok" value="TikTok"><label for="p-tiktok">TikTok</label></div>
+              <div class="plat-check"><input type="checkbox" id="p-lineoa" value="LINE OA"><label for="p-lineoa">LINE OA</label></div>
+              <div class="plat-check"><input type="checkbox" id="p-website" value="Website"><label for="p-website">Website</label></div>
             </div>
-            <div class="form-group"><label for="f-date">วันที่ลงงาน</label><input type="date" id="f-date"></div>
-            <div class="form-group">
-                <label for="f-image">รูปภาพแนบงาน</label>
-                <input type="file" id="f-image" accept="image/*" onchange="previewFile()">
-                <div id="preview-wrap" class="image-preview-wrap">
-                    <img id="img-render" src="" alt="รูปภาพแนบงาน" onclick="openImageViewer(this.src, 'รูปภาพแนบงาน')">
-                    <button class="remove-image-btn" type="button" aria-label="ลบรูปภาพ" onclick="removeImage()">×</button>
-                </div>
-            </div>
-            <div class="form-group"><label for="f-note">โน้ต</label><textarea id="f-note" rows="3" placeholder="ใส่รายละเอียดคำอธิบายเพิ่มเติม..."></textarea></div>
-            <div class="modal-footer">
-                <button class="btn btn-danger" id="btn-delete-card" type="button" onclick="deleteCard()">ลบ</button>
-                <button class="btn btn-secondary" type="button" onclick="closeCardModal()">ยกเลิก</button>
-                <button class="btn btn-primary" type="button" onclick="saveCard()">บันทึก</button>
-            </div>
+          </div>
+          <div class="field full"><label>Title / Hook</label><input id="f-title" placeholder="หัวข้อหรือ Key Message ของ Content"></div>
+          <div class="field full"><label>Caption / Copy</label><textarea id="f-caption" rows="7" placeholder="เขียน Caption หรือ Copy ที่จะใช้..."></textarea></div>
+          <div class="field"><label>Publish Date</label><input type="date" id="f-date"></div>
+          <div class="field"><label>Publish Time</label><input type="time" id="f-time"></div>
+          <div class="field full"><label>Media (Image)</label>
+            <div class="upload-box"><input type="file" id="f-image" accept="image/*" onchange="previewFile()"><div class="upload-preview" id="upload-preview"><img id="upload-img" src="" alt=""><button class="remove-img" onclick="removeImage()" type="button">×</button></div></div>
+          </div>
+          <div class="field full"><label>Internal Note</label><textarea id="f-note" rows="3" placeholder="หมายเหตุภายในทีม"></textarea></div>
         </div>
+      </div>
+
+      <div class="compose-preview">
+        <div class="panel-head"><div><h3>Post Preview</h3><small>ตัวอย่างการแสดงผล</small></div></div>
+        <div class="preview-tabs" id="preview-tabs"></div>
+        <div class="social-preview">
+          <div class="social-head"><div class="avatar">NC</div><div><div class="social-name" id="preview-name">NC Group</div><div class="social-time" id="preview-meta">Preview</div></div></div>
+          <img class="preview-media" id="preview-media-img" style="display:none" src="" alt="">
+          <div class="preview-media" id="preview-media-empty">Media Preview</div>
+          <div class="preview-caption" id="preview-caption">Caption preview...</div>
+        </div>
+        <div class="preview-note">Preview นี้ใช้สำหรับตรวจข้อความและองค์ประกอบก่อนเผยแพร่จริง รูปแบบจริงอาจต่างกันตามแต่ละแพลตฟอร์ม</div>
+      </div>
     </div>
 
-    <script>
-        const API = "https://script.google.com/macros/s/AKfycbx308F1MnmiEOb1oGA-IRxLJHdvwUKN42eYvvWFdM4GsxGIwM2NRj5e22qiRDhsI8HMKA/exec";
-        const APP_VERSION = "2026-07-10-image-viewer-full-ratio";
-        const STORAGE_KEY = "schedule-flow-local-backup-v2";
-        const STATUSES = ["idea", "doing", "review", "done"];
-        const STATUS_LABELS = { idea: "ไอเดีย", doing: "กำลังทำ", review: "รอตรวจงาน", done: "ลงแล้ว" };
-        const TH_MONTHS = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
-        const TH_WEEKDAYS = ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัส", "ศุกร์", "เสาร์"];
-
-        let state = { cards: [], accounts: [], nextCardId: 1, nextAcctId: 1, activeAcct: null };
-        let ui = { currentView: "board", currentMonth: new Date() };
-        let lastIsMobile = window.innerWidth <= 768;
-        let editCardId = null;
-        let currentImageData = "";
-
-        document.addEventListener("DOMContentLoaded", init);
-
-        async function init() {
-            try {
-                setInitialSidebarState();
-
-                window.addEventListener("resize", handleResize);
-
-                document.addEventListener("keydown", function (event) {
-                    if (event.key === "Escape") {
-                        closeImageViewer();
-                        closeCardModal();
-                        if (window.innerWidth <= 768) toggleSidebar(false);
-                    }
-                });
-
-                const modal = document.getElementById("card-modal");
-                if (modal) {
-                    modal.addEventListener("click", function (event) {
-                        if (event.target === event.currentTarget) closeCardModal();
-                    });
-                }
-
-                const imageViewer = document.getElementById("image-viewer");
-                if (imageViewer) {
-                    imageViewer.addEventListener("click", function (event) {
-                        if (event.target === event.currentTarget) {
-                            closeImageViewer();
-                        }
-                    });
-                }
-
-                await loadData();
-                switchView("board", false);
-            } catch (error) {
-                console.error("Initialization error:", error);
-
-                const backup = readLocalBackup();
-                if (backup) {
-                    hydrateState(backup);
-                    render();
-                    setSyncStatus("error", "โหลดออนไลน์ไม่สำเร็จ - ใช้ข้อมูลสำรอง");
-                } else {
-                    hydrateState({});
-                    render();
-                    setSyncStatus("error", "โหลดระบบไม่สำเร็จ");
-                }
-            } finally {
-                const loadingScreen = document.getElementById("loading-screen");
-                if (loadingScreen) loadingScreen.style.display = "none";
-            }
-        }
-
-        function setInitialSidebarState() {
-            lastIsMobile = window.innerWidth <= 768;
-            document.body.classList.toggle("sidebar-closed", lastIsMobile);
-            syncSidebarButtons();
-        }
-
-        function handleResize() {
-            const isMobile = window.innerWidth <= 768;
-            if (isMobile === lastIsMobile) return;
-            lastIsMobile = isMobile;
-            document.body.classList.toggle("sidebar-closed", isMobile);
-            syncSidebarButtons();
-        }
-
-        function toggleSidebar(forceOpen) {
-            const shouldOpen = typeof forceOpen === "boolean" ? forceOpen : document.body.classList.contains("sidebar-closed");
-            document.body.classList.toggle("sidebar-closed", !shouldOpen);
-            syncSidebarButtons();
-        }
-
-        function syncSidebarButtons() {
-            const isOpen = !document.body.classList.contains("sidebar-closed");
-            ["sidebar-toggle-main", "sidebar-toggle-sidebar"].forEach(function (id) {
-                const el = document.getElementById(id);
-                if (el) el.setAttribute("aria-expanded", String(isOpen));
-            });
-        }
-
-        function toggleSection(sectionName) {
-            const group = document.querySelector(`[data-section="${sectionName}"]`);
-            if (group) group.classList.toggle("collapsed");
-        }
-
-        function switchView(view, closeMenu = true) {
-            ui.currentView = view === "calendar" ? "calendar" : "board";
-            document.getElementById("kanban-view").classList.toggle("active", ui.currentView === "board");
-            document.getElementById("calendar-view").classList.toggle("active", ui.currentView === "calendar");
-            document.getElementById("nav-board").classList.toggle("active", ui.currentView === "board");
-            document.getElementById("nav-calendar").classList.toggle("active", ui.currentView === "calendar");
-
-            const title = ui.currentView === "calendar" ? "ปฏิทินรายเดือน" : "Schedule Flow";
-            const desc = ui.currentView === "calendar" ? "ดูงานตามวันที่ลงคอนเทนต์ในรูปแบบปฏิทิน" : "จัดการงานด้วยบอร์ด Kanban แบบลากวางได้";
-            document.getElementById("current-board-title").innerText = title;
-            document.getElementById("view-description").innerText = desc;
-
-            if (ui.currentView === "calendar") renderCalendar();
-            if (closeMenu && window.innerWidth <= 768) toggleSidebar(false);
-        }
-
-        function setSyncStatus(type, text) {
-            document.getElementById("status-dot").className = "status-dot " + type;
-            document.getElementById("status-text").innerText = text;
-        }
-
-        function timeNow() {
-            return new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
-        }
-
-        async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
-            const controller = new AbortController();
-            const timeoutId = window.setTimeout(function () {
-                controller.abort();
-            }, timeoutMs);
-
-            try {
-                return await fetch(url, {
-                    ...options,
-                    signal: controller.signal
-                });
-            } finally {
-                window.clearTimeout(timeoutId);
-            }
-        }
-
-        async function apiGetAll() {
-            const url = `${API}?action=getAll&ts=${Date.now()}`;
-            try {
-                const res = await fetchWithTimeout(url, {
-                    method: "GET",
-                    cache: "no-store",
-                    redirect: "follow",
-                    credentials: "omit"
-                }, 8000);
-                if (!res.ok) throw new Error("HTTP " + res.status);
-                return await res.json();
-            } catch (error) {
-                console.warn("Fetch GET failed, trying JSONP fallback", error);
-                return await jsonpGetAll();
-            }
-        }
-
-        function jsonpGetAll() {
-            return new Promise(function (resolve, reject) {
-                const callbackName = "__scheduleFlowCallback" + Date.now() + Math.floor(Math.random() * 100000);
-                const script = document.createElement("script");
-                const timeout = window.setTimeout(function () {
-                    cleanup();
-                    reject(new Error("JSONP timeout"));
-                }, 8000);
-
-                function cleanup() {
-                    window.clearTimeout(timeout);
-                    delete window[callbackName];
-                    if (script.parentNode) script.parentNode.removeChild(script);
-                }
-
-                window[callbackName] = function (data) {
-                    cleanup();
-                    resolve(data || {});
-                };
-
-                script.onerror = function () {
-                    cleanup();
-                    reject(new Error("JSONP request failed"));
-                };
-
-                script.src = `${API}?action=getAll&callback=${encodeURIComponent(callbackName)}&ts=${Date.now()}`;
-                document.head.appendChild(script);
-            });
-        }
-
-        async function loadData() {
-            setSyncStatus("loading", "กำลังดึงข้อมูล...");
-            try {
-                const data = await apiGetAll();
-                hydrateState(data);
-                saveLocalBackup();
-                render();
-                setSyncStatus("ok", "เชื่อมต่อสำเร็จ " + timeNow());
-            } catch (error) {
-                console.error(error);
-                const backup = readLocalBackup();
-                if (backup) {
-                    hydrateState(backup);
-                    render();
-                    setSyncStatus("error", "เชื่อมต่อไม่ได้ - ใช้ข้อมูลสำรอง");
-                } else {
-                    hydrateState({});
-                    render();
-                    setSyncStatus("error", "เชื่อมต่อไม่ได้");
-                }
-            }
-        }
-
-        function hydrateState(data) {
-            const rawAccounts = Array.isArray(data.accounts) ? data.accounts.filter(Boolean) : [];
-            if (rawAccounts.length === 0) rawAccounts.push({ id: 1, name: "Main Account" });
-
-            state.accounts = rawAccounts.map(function (account, index) {
-                return { id: account.id ?? (index + 1), name: account.name || `Account ${index + 1}` };
-            });
-
-            const firstAccountId = state.accounts[0].id;
-            state.cards = Array.isArray(data.cards) ? data.cards.filter(Boolean).map(function (card, index) {
-                return {
-                    id: card.id ?? (index + 1),
-                    title: card.title || "ไม่มีชื่อ",
-                    platform: card.platform || "TikTok",
-                    status: STATUSES.includes(card.status) ? card.status : "idea",
-                    date: card.date || "",
-                    image: card.image || "",
-                    note: card.note || "",
-                    acctId: card.acctId ?? firstAccountId,
-                    createdAt: card.createdAt || ""
-                };
-            }) : [];
-
-            state.nextCardId = Number(data.nextCardId) || getNextId(state.cards);
-            state.nextAcctId = Number(data.nextAcctId) || getNextId(state.accounts);
-            state.activeAcct = state.accounts.some(function (account) { return sameId(account.id, data.activeAcct); }) ? data.activeAcct : firstAccountId;
-        }
-
-        function getNextId(items) {
-            return items.reduce(function (max, item) {
-                return Math.max(max, Number(item.id) || 0);
-            }, 0) + 1;
-        }
-
-        function saveLocalBackup() {
-            try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify({
-                    cards: state.cards,
-                    accounts: state.accounts,
-                    nextCardId: state.nextCardId,
-                    nextAcctId: state.nextAcctId,
-                    activeAcct: state.activeAcct
-                }));
-            } catch (error) {
-                console.warn("Cannot save local backup", error);
-            }
-        }
-
-        function readLocalBackup() {
-            try {
-                const raw = localStorage.getItem(STORAGE_KEY);
-                return raw ? JSON.parse(raw) : null;
-            } catch (error) {
-                return null;
-            }
-        }
-
-        async function pushData() {
-            saveLocalBackup();
-            setSyncStatus("loading", "กำลังบันทึก...");
-
-            try {
-                const response = await fetchWithTimeout(API, {
-                    method: "POST",
-                    redirect: "follow",
-                    credentials: "omit",
-                    headers: {
-                        "Content-Type": "text/plain;charset=utf-8"
-                    },
-                    body: JSON.stringify({
-                        action: "save",
-                        cards: state.cards,
-                        accounts: state.accounts,
-                        nextCardId: state.nextCardId,
-                        nextAcctId: state.nextAcctId,
-                        activeAcct: state.activeAcct
-                    })
-                }, 20000);
-
-                const responseText = await response.text();
-
-                if (!response.ok) {
-                    throw new Error(
-                        "HTTP " + response.status +
-                        (responseText ? ": " + responseText.slice(0, 300) : "")
-                    );
-                }
-
-                let result;
-
-                try {
-                    result = JSON.parse(responseText);
-                } catch (parseError) {
-                    console.error("Save response:", responseText);
-                    throw new Error("Google Apps Script ไม่ได้ส่งข้อมูล JSON กลับมา");
-                }
-
-                if (!result.success) {
-                    throw new Error(result.message || "Save failed");
-                }
-
-                setSyncStatus("ok", "ซิงค์ข้อมูลสำเร็จ " + timeNow());
-
-            } catch (error) {
-                console.error("Save error:", error);
-
-                const message =
-                    error && error.name === "AbortError"
-                        ? "บันทึกออนไลน์หมดเวลา"
-                        : "บันทึกออนไลน์ไม่สำเร็จ";
-
-                setSyncStatus("error", message);
-            }
-        }
-
-        async function previewFile() {
-            const input = document.getElementById("f-image");
-            const file = input && input.files ? input.files[0] : null;
-
-            if (!file) return;
-
-            const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-
-            if (!allowedTypes.includes(file.type)) {
-                alert("รองรับเฉพาะไฟล์ JPG, PNG, WEBP และ GIF");
-                input.value = "";
-                return;
-            }
-
-            if (file.size > 5 * 1024 * 1024) {
-                alert("กรุณาเลือกไฟล์รูปภาพขนาดไม่เกิน 5 MB");
-                input.value = "";
-                return;
-            }
-
-            setSyncStatus("loading", "กำลังอัปโหลดรูป...");
-
-            try {
-                const base64Data = await readCompressedImage(file);
-
-                const response = await fetchWithTimeout(API, {
-                    method: "POST",
-                    redirect: "follow",
-                    credentials: "omit",
-                    headers: {
-                        "Content-Type": "text/plain;charset=utf-8"
-                    },
-                    body: JSON.stringify({
-                        action: "uploadImage",
-                        base64Data: base64Data,
-                        fileName: file.name
-                    })
-                }, 30000);
-
-                const responseText = await response.text();
-
-                if (!response.ok) {
-                    throw new Error(
-                        "HTTP " + response.status +
-                        (responseText ? ": " + responseText.slice(0, 300) : "")
-                    );
-                }
-
-                let result;
-
-                try {
-                    result = JSON.parse(responseText);
-                } catch (parseError) {
-                    console.error("Apps Script response:", responseText);
-                    throw new Error(
-                        "Google Apps Script ไม่ได้ส่งข้อมูล JSON กลับมา"
-                    );
-                }
-
-                if (!result.success) {
-                    throw new Error(
-                        result.message || "Google Drive อัปโหลดไม่สำเร็จ"
-                    );
-                }
-
-                const imageUrl = result.url || result.directUrl;
-
-                if (!imageUrl) {
-                    throw new Error("ระบบไม่ได้ส่ง URL รูปภาพกลับมา");
-                }
-
-                currentImageData = imageUrl;
-
-                const previewImage = document.getElementById("img-render");
-                const previewWrap = document.getElementById("preview-wrap");
-
-                previewImage.onload = function () {
-                    previewWrap.style.display = "block";
-                };
-
-                previewImage.onerror = function () {
-                    previewWrap.style.display = "block";
-                    console.warn("อัปโหลดสำเร็จ แต่เบราว์เซอร์แสดงตัวอย่างรูปไม่ได้", result);
-                };
-
-                previewImage.src = imageUrl;
-                previewWrap.style.display = "block";
-
-                setSyncStatus("ok", "อัปโหลดรูปสำเร็จ " + timeNow());
-
-                if (result.warning) {
-                    console.warn(result.warning);
-                }
-
-            } catch (error) {
-                console.error("Upload error:", error);
-                setSyncStatus("error", "อัปโหลดรูปไม่สำเร็จ");
-
-                const reason =
-                    error && error.name === "AbortError"
-                        ? "หมดเวลารอการตอบกลับจาก Google Apps Script"
-                        : (error && error.message ? error.message : "ไม่ทราบสาเหตุ");
-
-              alert(
-    "อัปโหลดรูปไม่สำเร็จ\n\nสาเหตุ: " + reason
-);
-
-                input.value = "";
-            }
-        }
-
-        function readCompressedImage(file) {
-            return new Promise(function (resolve, reject) {
-                const reader = new FileReader();
-                reader.onerror = reject;
-                reader.onload = function () {
-                    const originalDataUrl = reader.result;
-                    if (file.size <= 900 * 1024) {
-                        resolve(originalDataUrl);
-                        return;
-                    }
-
-                    const img = new Image();
-                    img.onload = function () {
-                        const maxWidth = 1280;
-                        const scale = Math.min(1, maxWidth / img.width);
-                        const canvas = document.createElement("canvas");
-                        canvas.width = Math.round(img.width * scale);
-                        canvas.height = Math.round(img.height * scale);
-                        const ctx = canvas.getContext("2d");
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        resolve(canvas.toDataURL("image/jpeg", 0.82));
-                    };
-                    img.onerror = function () { resolve(originalDataUrl); };
-                    img.src = originalDataUrl;
-                };
-                reader.readAsDataURL(file);
-            });
-        }
-
-
-        function openImageViewer(imageUrl, caption = "") {
-            if (!imageUrl) return;
-
-            const viewer = document.getElementById("image-viewer");
-            const viewerImage = document.getElementById("image-viewer-img");
-            const viewerCaption = document.getElementById("image-viewer-caption");
-
-            if (!viewer || !viewerImage || !viewerCaption) return;
-
-            viewerImage.src = imageUrl;
-            viewerImage.alt = caption || "รูปภาพขนาดเต็ม";
-            viewerCaption.textContent = caption || "";
-            viewer.classList.add("show");
-            document.body.style.overflow = "hidden";
-        }
-
-        function closeImageViewer() {
-            const viewer = document.getElementById("image-viewer");
-            const viewerImage = document.getElementById("image-viewer-img");
-            const cardModal = document.getElementById("card-modal");
-
-            if (viewer) viewer.classList.remove("show");
-            if (viewerImage) viewerImage.src = "";
-
-            if (!cardModal || !cardModal.classList.contains("show")) {
-                document.body.style.overflow = "";
-            }
-        }
-
-        function removeImage() {
-            document.getElementById("f-image").value = "";
-            currentImageData = "";
-            document.getElementById("img-render").src = "";
-            document.getElementById("preview-wrap").style.display = "none";
-        }
-
-        function render() {
-    renderAccounts();
-    renderCards();
-    calculateSummary();
-
-    if (ui.currentView === "calendar") {
-        renderCalendar();
-    }
-        }
-
-        function renderAccounts() {
-    const list = document.getElementById("account-list");
-    list.innerHTML = "";
-
-    state.accounts.forEach(function (account) {
-        const count = state.cards.filter(function (card) {
-            return sameId(card.acctId, account.id);
-        }).length;
-
-        const item = document.createElement("div");
-        item.className =
-            "menu-item " +
-            (sameId(state.activeAcct, account.id) ? "active" : "");
-
-        item.innerHTML = `
-            <span>👤</span>
-
-            <span class="menu-text">
-                ${escapeHTML(account.name)}
-            </span>
-
-            <span class="nav-count">
-                ${count}
-            </span>
-
-            ${
-                state.accounts.length > 1
-                    ? `
-                    <button
-                        type="button"
-                        class="account-delete-btn"
-                        aria-label="ลบบัญชี ${escapeAttribute(account.name)}"
-                        title="ลบบัญชี"
-                    >
-                        ×
-                    </button>
-                    `
-                    : ""
-            }
-        `;
-
-        item.addEventListener("click", function (event) {
-            if (event.target.closest(".account-delete-btn")) return;
-
-            state.activeAcct = account.id;
-            saveLocalBackup();
-            render();
-
-            if (window.innerWidth <= 768) {
-                toggleSidebar(false);
-            }
-        });
-
-        const deleteButton = item.querySelector(".account-delete-btn");
-
-        if (deleteButton) {
-            deleteButton.addEventListener("click", function (event) {
-                event.stopPropagation();
-                deleteAccount(account.id);
-            });
-        }
-
-        list.appendChild(item);
+    <div class="compose-actions composer-footer">
+      <button class="btn btn-danger" id="delete-btn" onclick="deleteCard()" style="margin-right:auto">ลบ Post</button>
+      <button class="btn btn-light" onclick="closeComposer()">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="saveCard()">บันทึก Content</button>
+    </div>
+  </div>
+</div>
+
+<div class="image-viewer" id="image-viewer" role="dialog" aria-modal="true" aria-label="ดูรูปภาพขนาดเต็ม" onclick="closeImageViewer()"><button class="viewer-close" type="button" aria-label="ปิดรูปภาพ">×</button><img id="viewer-img" src="" alt="รูปภาพขนาดเต็ม" onclick="event.stopPropagation()"></div>
+
+<script>
+const API="https://script.google.com/macros/s/AKfycbx308F1MnmiEOb1oGA-IRxLJHdvwUKN42eYvvWFdM4GsxGIwM2NRj5e22qiRDhsI8HMKA/exec";
+const STORAGE_KEY="contentflow-v2-local-backup";
+const STATUSES=["idea","doing","review","approved","scheduled","done"];
+const STATUS_LABELS={idea:"Idea",doing:"Creating",review:"Review",approved:"Approved",scheduled:"Scheduled",done:"Published"};
+const PLATFORMS=["Facebook","Instagram","TikTok","LINE OA","Website"];
+const TH_MONTHS=["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+
+let state={cards:[],accounts:[],nextCardId:1,nextAcctId:1,activeAcct:"all"};
+let ui={view:"dashboard",month:new Date(),project:"all",platform:"all",status:"all",search:""};
+let editCardId=null,currentImageData="",previewPlatform="Facebook";
+
+document.addEventListener("DOMContentLoaded",init);
+async function init(){
+  try{
+    document.getElementById("composer-modal").addEventListener("click",e=>{if(e.target===e.currentTarget)closeComposer()});
+    document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeComposer();closeImageViewer();toggleMenu(false)}});
+    ["f-title","f-caption","f-date","f-time","f-project","f-campaign","f-pillar","f-status"].forEach(id=>{
+      const el=document.getElementById(id);if(el)el.addEventListener("input",updatePreview);
     });
+    document.querySelectorAll(".plat-check input").forEach(el=>el.addEventListener("change",()=>{renderPreviewTabs();updatePreview()}));
+    await loadData();
+    switchView("dashboard",false);
+  }catch(error){
+    console.error("ContentFlow initialization error",error);
+    setSync("error","โหลดระบบไม่สมบูรณ์");
+  }finally{
+    const loading=document.getElementById("loading");if(loading)loading.style.display="none";
+  }
 }
 
-        function renderCards() {
-            const columns = ["idea", "doing", "review", "done"];
-            columns.forEach(function (col) {
-                const list = document.getElementById(`list-${col}`);
-                list.innerHTML = "";
-                const filtered = sortCards(state.cards.filter(function (card) {
-                    return card.status === col && sameId(card.acctId, state.activeAcct);
-                }));
-                document.getElementById(`count-${col}`).innerText = filtered.length;
-
-                if (filtered.length === 0) {
-                    const empty = document.createElement("div");
-                    empty.className = "empty-state";
-                    empty.innerText = "ยังไม่มีงานในช่องนี้";
-                    list.appendChild(empty);
-                    return;
-                }
-
-                filtered.forEach(function (card) {
-                    const div = document.createElement("div");
-                    div.className = "card";
-                    div.draggable = true;
-                    div.ondragstart = function (event) { event.dataTransfer.setData("text/plain", card.id); };
-                    div.onclick = function (event) {
-                        if (event.target.closest("select, button, a, input")) return;
-                        openCardModal(card.id);
-                    };
-                    const imgHtml = card.image
-                        ? `<img
-                            src="${escapeAttribute(card.image)}"
-                            alt="รูปภาพของ ${escapeAttribute(card.title)}"
-                            title="คลิกเพื่อดูรูปขนาดเต็ม"
-                            onclick="event.stopPropagation(); openImageViewer('${escapeJsString(card.image)}', '${escapeJsString(card.title)}')"
-                        >`
-                        : "";
-                    div.innerHTML = `
-                        <div class="card-title">${escapeHTML(card.title)}</div>
-                        ${imgHtml}
-                        <div class="card-meta">
-                            <span class="badge ${escapeAttribute((card.platform || "").toLowerCase())}">${escapeHTML(card.platform || "-")}</span>
-                            <span>${escapeHTML(formatDate(card.date))}</span>
-                        </div>
-                        <select class="card-status-select" aria-label="เปลี่ยนสถานะงาน">
-                            ${renderStatusOptions(card.status)}
-                        </select>
-                    `;
-                    const statusSelect = div.querySelector(".card-status-select");
-                    statusSelect.addEventListener("click", function (event) { event.stopPropagation(); });
-                    statusSelect.addEventListener("change", function (event) {
-                        event.stopPropagation();
-                        updateCardStatus(card.id, event.target.value);
-                    });
-                    list.appendChild(div);
-                });
-            });
-        }
-
-        function renderStatusOptions(activeStatus) {
-            return STATUSES.map(function (status) {
-                return `<option value="${status}" ${status === activeStatus ? "selected" : ""}>${STATUS_LABELS[status]}</option>`;
-            }).join("");
-        }
-
-        function calculateSummary() {
-            const activeCards = state.cards.filter(function (card) { return sameId(card.acctId, state.activeAcct); });
-            document.getElementById("sum-all").innerText = activeCards.length;
-            document.getElementById("sum-done").innerText = activeCards.filter(function (card) { return card.status === "done"; }).length;
-
-            let in7Days = 0;
-            let overdue = 0;
-            const today = startOfDay(new Date());
-            const sevenDaysLater = new Date(today);
-            sevenDaysLater.setDate(today.getDate() + 7);
-
-            activeCards.forEach(function (card) {
-                const cardDate = parseDateKey(card.date);
-                if (!cardDate) return;
-                if (card.status !== "done" && cardDate < today) overdue += 1;
-                if (cardDate >= today && cardDate <= sevenDaysLater) in7Days += 1;
-            });
-
-            document.getElementById("sum-week").innerText = in7Days;
-            document.getElementById("sum-over").innerText = overdue;
-        }
-
-        function renderCalendar() {
-            const body = document.getElementById("calendar-grid");
-            body.innerHTML = "";
-
-            const year = ui.currentMonth.getFullYear();
-            const month = ui.currentMonth.getMonth();
-            const firstDay = new Date(year, month, 1);
-            const lastDay = new Date(year, month + 1, 0);
-            const daysInMonth = lastDay.getDate();
-            const firstWeekday = firstDay.getDay();
-
-            document.getElementById("calendar-title").innerHTML = `${TH_MONTHS[month]} ${year + 543}<small>ครบ ${daysInMonth} วัน</small>`;
-
-            const activeCards = sortCards(state.cards.filter(function (card) { return sameId(card.acctId, state.activeAcct); }));
-            const todayKey = toDateKey(new Date());
-            const maxVisible = window.innerWidth <= 768 ? 2 : 3;
-
-            /*
-                คำนวณจำนวนช่องของตารางจากวันเริ่มต้น + จำนวนวันจริงของเดือน
-                เพื่อให้เดือนที่มี 30/31 วันแสดงครบ และไม่มีวันปลายเดือนหลุดออกจากตาราง
-            */
-            const totalCells = Math.ceil((firstWeekday + daysInMonth) / 7) * 7;
-            console.info(`[ScheduleFlow] Calendar ${year}-${String(month + 1).padStart(2, "0")} has ${daysInMonth} days and ${totalCells / 7} rows`);
-            let row = null;
-
-            for (let cellIndex = 0; cellIndex < totalCells; cellIndex += 1) {
-                if (cellIndex % 7 === 0) {
-                    row = document.createElement("tr");
-                    body.appendChild(row);
-                }
-
-                const day = cellIndex - firstWeekday + 1;
-                if (day < 1 || day > daysInMonth) {
-                    row.appendChild(createEmptyCalendarCell());
-                    continue;
-                }
-
-                const date = new Date(year, month, day);
-                const key = toDateKey(date);
-                const dayCards = activeCards.filter(function (card) { return card.date === key; });
-                row.appendChild(createCalendarCell(date, key, dayCards, todayKey, maxVisible));
-            }
-        }
-
-        function createEmptyCalendarCell() {
-            const cell = document.createElement("td");
-            cell.className = "calendar-empty";
-            cell.setAttribute("aria-hidden", "true");
-            cell.innerHTML = '<div class="calendar-day empty"></div>';
-            return cell;
-        }
-
-        function createCalendarCell(date, key, dayCards, todayKey, maxVisible) {
-            const day = date.getDate();
-            const cell = document.createElement("td");
-            cell.className = (key === todayKey ? "calendar-today" : "") + (dayCards.length ? " has-cards" : "");
-            cell.setAttribute("data-date", key);
-            cell.innerHTML = `
-                <div class="calendar-day${key === todayKey ? " today" : ""}">
-                    <div class="calendar-day-header">
-                        <div class="calendar-date">${day}<span class="weekday-mobile">${TH_WEEKDAYS[date.getDay()]}</span></div>
-                        <button class="day-add" type="button" aria-label="เพิ่มงานวันที่ ${formatDate(key)}" title="เพิ่มงานวันที่ ${formatDate(key)}">+</button>
-                    </div>
-                    <div class="calendar-card-list"></div>
-                </div>
-            `;
-
-            cell.querySelector(".day-add").addEventListener("click", function (event) {
-                event.stopPropagation();
-                openCardModal(null, key);
-            });
-
-            const list = cell.querySelector(".calendar-card-list");
-            dayCards.slice(0, maxVisible).forEach(function (card) {
-                const item = document.createElement("div");
-                item.className = "calendar-card";
-                item.innerHTML = `<strong>${escapeHTML(card.title)}</strong><span>${escapeHTML(card.platform || "-")} · ${STATUS_LABELS[card.status] || card.status}</span>`;
-                item.onclick = function (event) {
-                    event.stopPropagation();
-                    openCardModal(card.id);
-                };
-                list.appendChild(item);
-            });
-
-            if (dayCards.length > maxVisible) {
-                const more = document.createElement("div");
-                more.className = "calendar-more";
-                more.innerText = `+${dayCards.length - maxVisible} งานเพิ่มเติม`;
-                list.appendChild(more);
-            }
-
-            return cell;
-        }
-
-        function changeMonth(delta) {
-            ui.currentMonth = new Date(ui.currentMonth.getFullYear(), ui.currentMonth.getMonth() + delta, 1);
-            renderCalendar();
-        }
-
-        function goToday() {
-            ui.currentMonth = new Date();
-            renderCalendar();
-        }
-
-        function openCardModal(id = null, presetDate = null) {
-            editCardId = id;
-            const modal = document.getElementById("card-modal");
-            modal.classList.add("show");
-            document.getElementById("btn-delete-card").style.display = id ? "inline-flex" : "none";
-
-            if (id) {
-                const card = state.cards.find(function (item) { return sameId(item.id, id); });
-                if (!card) return;
-                document.getElementById("modal-title").innerText = "แก้ไขงาน";
-                document.getElementById("f-title").value = card.title || "";
-                document.getElementById("f-plat").value = card.platform || "TikTok";
-                document.getElementById("f-status").value = card.status || "idea";
-                document.getElementById("f-date").value = card.date || "";
-                document.getElementById("f-note").value = card.note || "";
-                if (card.image) {
-                    currentImageData = card.image;
-                    document.getElementById("img-render").src = card.image;
-                    document.getElementById("preview-wrap").style.display = "block";
-                } else {
-                    removeImage();
-                }
-            } else {
-                document.getElementById("modal-title").innerText = "เพิ่มงานใหม่";
-                document.getElementById("f-title").value = "";
-                document.getElementById("f-plat").value = "TikTok";
-                document.getElementById("f-status").value = "idea";
-                document.getElementById("f-date").value = presetDate || toDateKey(new Date());
-                document.getElementById("f-note").value = "";
-                removeImage();
-            }
-            setTimeout(function () { document.getElementById("f-title").focus(); }, 50);
-        }
-
-        function closeCardModal() {
-            document.getElementById("card-modal").classList.remove("show");
-
-            const viewer = document.getElementById("image-viewer");
-            if (!viewer || !viewer.classList.contains("show")) {
-                document.body.style.overflow = "";
-            }
-        }
-
-        function saveCard() {
-            const title = document.getElementById("f-title").value.trim();
-            if (!title) {
-                alert("กรุณาใส่ชื่องานก่อนบันทึก");
-                document.getElementById("f-title").focus();
-                return;
-            }
-
-            const payload = {
-                title,
-                platform: document.getElementById("f-plat").value,
-                status: document.getElementById("f-status").value,
-                date: document.getElementById("f-date").value,
-                image: currentImageData,
-                note: document.getElementById("f-note").value.trim()
-            };
-
-            if (editCardId) {
-                state.cards = state.cards.map(function (card) {
-                    return sameId(card.id, editCardId) ? { ...card, ...payload } : card;
-                });
-            } else {
-                state.cards.push({
-                    id: state.nextCardId++,
-                    ...payload,
-                    acctId: state.activeAcct,
-                    createdAt: new Date().toISOString()
-                });
-            }
-
-            closeCardModal();
-            render();
-            pushData();
-        }
-
-        function deleteCard() {
-            if (!editCardId) return;
-            if (confirm("คุณต้องการลบงานนี้ใช่หรือไม่?")) {
-                state.cards = state.cards.filter(function (card) { return !sameId(card.id, editCardId); });
-                closeCardModal();
-                render();
-                pushData();
-            }
-        }
-
-        function promptNewAccount() {
-            const name = prompt("ระบุชื่อบัญชีใหม่:");
-            if (name && name.trim()) {
-                const newAccount = { id: state.nextAcctId++, name: name.trim() };
-                state.accounts.push(newAccount);
-                state.activeAcct = newAccount.id;
-                render();
-                pushData();
-            }
-        }
-
-        function deleteAccount(accountId) {
-    if (state.accounts.length <= 1) {
-        alert("ต้องมีบัญชีอย่างน้อย 1 บัญชี");
-        return;
-    }
-
-    const account = state.accounts.find(function (item) {
-        return sameId(item.id, accountId);
-    });
-
-    if (!account) return;
-
-    const accountCards = state.cards.filter(function (card) {
-        return sameId(card.acctId, accountId);
-    });
-
-    let message = `ต้องการลบบัญชี "${account.name}" ใช่หรือไม่?`;
-
-    if (accountCards.length > 0) {
-        message += `\n\nงานในบัญชีนี้จำนวน ${accountCards.length} งานจะถูกลบด้วย`;
-    }
-
-    if (!confirm(message)) return;
-
-    state.cards = state.cards.filter(function (card) {
-        return !sameId(card.acctId, accountId);
-    });
-
-    state.accounts = state.accounts.filter(function (item) {
-        return !sameId(item.id, accountId);
-    });
-
-    if (sameId(state.activeAcct, accountId)) {
-        state.activeAcct = state.accounts[0].id;
-    }
-
-    render();
-    pushData();
+function toggleMenu(force){
+  const open=typeof force==="boolean"?force:!document.body.classList.contains("menu-open");
+  document.body.classList.toggle("menu-open",open);
 }
-        function allowDrop(event) {
-            event.preventDefault();
-        }
 
-        function drop(event, col) {
-            event.preventDefault();
-            const id = event.dataTransfer.getData("text/plain");
-            updateCardStatus(id, col);
-        }
+function setSync(type,text){
+  const dot=document.getElementById("sync-dot");dot.className="dot "+(type||"");
+  document.getElementById("sync-text").textContent=text;
+}
+function timeNow(){return new Date().toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit"})}
 
-        function updateCardStatus(id, status) {
-            if (!STATUSES.includes(status)) return;
-            state.cards = state.cards.map(function (card) {
-                return sameId(card.id, id) ? { ...card, status } : card;
-            });
-            render();
-            pushData();
-        }
+async function fetchWithTimeout(url,options={},timeout=12000){
+  const c=new AbortController();const t=setTimeout(()=>c.abort(),timeout);
+  try{return await fetch(url,{...options,signal:c.signal})}finally{clearTimeout(t)}
+}
+async function apiGetAll(){
+  const url=`${API}?action=getAll&ts=${Date.now()}`;
+  const res=await fetchWithTimeout(url,{method:"GET",cache:"no-store",redirect:"follow",credentials:"omit"},10000);
+  if(!res.ok)throw new Error("HTTP "+res.status);
+  const text=await res.text();
+  try{return JSON.parse(text)}catch(error){throw new Error("ข้อมูลจาก Google Apps Script ไม่ใช่ JSON ที่ถูกต้อง")}
+}
+async function loadData(){
+  setSync("","กำลังดึงข้อมูล...");
+  try{
+    const data=await apiGetAll();hydrateState(data);saveLocalBackup();renderAll();setSync("ok","Sync "+timeNow());
+  }catch(err){
+    console.error(err);const backup=readLocalBackup();
+    if(backup){hydrateState(backup);renderAll();setSync("error","Offline · ใช้ข้อมูลสำรอง")}
+    else{hydrateState({});renderAll();setSync("error","เชื่อมต่อไม่ได้")}
+  }
+}
+function hydrateState(data){
+  const acc=Array.isArray(data.accounts)?data.accounts.filter(Boolean):[];
+  if(!acc.length)acc.push({id:1,name:"Project 1"});
+  state.accounts=acc.map((a,i)=>({id:a.id??i+1,name:a.name||`Project ${i+1}`}));
+  const first=state.accounts[0].id;
+  state.cards=Array.isArray(data.cards)?data.cards.filter(Boolean).map((c,i)=>({
+    id:c.id??i+1,title:c.title||"ไม่มีชื่อ",platform:normalizePlatformString(c.platform),
+    status:STATUSES.includes(c.status)?c.status:(c.status==="done"?"done":"idea"),
+    date:c.date||"",time:c.time||"",image:c.image||"",note:c.note||"",caption:c.caption||c.note||"",
+    campaign:c.campaign||"",pillar:c.pillar||"",acctId:c.acctId??first,createdAt:c.createdAt||""
+  })):[];
+  state.nextCardId=Number(data.nextCardId)||nextId(state.cards);
+  state.nextAcctId=Number(data.nextAcctId)||nextId(state.accounts);
+  state.activeAcct="all";
+  ui.project="all";
+}
+function nextId(items){return items.reduce((m,x)=>Math.max(m,Number(x.id)||0),0)+1}
+function normalizePlatformString(v){
+  if(Array.isArray(v))return v.join(", ");
+  return String(v||"Facebook");
+}
+function saveLocalBackup(){
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify({cards:state.cards,accounts:state.accounts,nextCardId:state.nextCardId,nextAcctId:state.nextAcctId,activeAcct:state.activeAcct}))}catch(e){}
+}
+function readLocalBackup(){try{const r=localStorage.getItem(STORAGE_KEY);return r?JSON.parse(r):null}catch(e){return null}}
+async function pushData(){
+  saveLocalBackup();setSync("","กำลังบันทึก...");
+  try{
+    const res=await fetchWithTimeout(API,{method:"POST",credentials:"omit",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({
+      action:"save",cards:state.cards,accounts:state.accounts,nextCardId:state.nextCardId,nextAcctId:state.nextAcctId,activeAcct:state.activeAcct
+    })},20000);
+    const txt=await res.text();if(!res.ok)throw new Error("HTTP "+res.status);
+    const result=JSON.parse(txt);if(!result.success)throw new Error(result.message||"Save failed");
+    setSync("ok","Sync "+timeNow());
+  }catch(e){console.error(e);setSync("error","บันทึกออนไลน์ไม่สำเร็จ")}
+}
 
-        function sortCards(cards) {
-            return [...cards].sort(function (a, b) {
-                const dateA = a.date || "9999-12-31";
-                const dateB = b.date || "9999-12-31";
-                if (dateA !== dateB) return dateA.localeCompare(dateB);
-                return String(a.id).localeCompare(String(b.id));
-            });
-        }
+function renderAll(){
+  renderProjects();renderProjectFilter();renderDashboard();renderBoard();renderCalendar();renderWorkflowCounts();
+}
+function switchView(view,close=true){
+  if(!["dashboard","board","calendar"].includes(view))view="dashboard";
+  ui.view=view;
+  ["dashboard","board","calendar"].forEach(v=>{
+    document.getElementById(v+"-view").classList.toggle("active",v===view);
+    const nav=document.getElementById("nav-"+v);if(nav)nav.classList.toggle("active",v===view);
+  });
+  const titles={dashboard:["Dashboard","ภาพรวมแผนคอนเทนต์ทุก Project"],board:["Kanban Board","จัดการ Workflow ของ Content"],calendar:["Content Calendar","ดูแผนคอนเทนต์ตามวันเผยแพร่"]};
+  document.getElementById("page-title").textContent=titles[view][0];
+  document.getElementById("page-subtitle").textContent=titles[view][1];
+  if(view==="calendar")renderCalendar();if(view==="board")renderBoard();if(view==="dashboard")renderDashboard();
+  if(close)toggleMenu(false);
+}
+function renderProjects(){
+  const list=document.getElementById("project-list");list.innerHTML="";
+  const all=document.createElement("button");all.className="project-item "+(ui.project==="all"?"active":"");
+  all.innerHTML=`<span class="nav-icon">▣</span><span class="nav-text">All Project</span><span class="count">${state.cards.length}</span>`;
+  all.onclick=()=>onProjectFilterChange("all");list.appendChild(all);
+  state.accounts.forEach(p=>{
+    const count=state.cards.filter(c=>sameId(c.acctId,p.id)).length;
+    const row=document.createElement("div");row.className="project-item "+(sameId(ui.project,p.id)?"active":"");
+    row.innerHTML=`<span class="nav-icon">⌂</span><span class="nav-text">${escapeHTML(p.name)}</span><span class="count">${count}</span>${state.accounts.length>1?`<button class="project-delete" title="ลบ Project">×</button>`:""}`;
+    row.addEventListener("click",e=>{if(e.target.closest(".project-delete"))return;onProjectFilterChange(String(p.id))});
+    const del=row.querySelector(".project-delete");if(del)del.onclick=e=>{e.stopPropagation();deleteProject(p.id)};
+    list.appendChild(row);
+  });
+}
+function renderProjectFilter(){
+  const sel=document.getElementById("filter-project");
+  sel.innerHTML=`<option value="all">All Project</option>`+state.accounts.map(p=>`<option value="${escapeAttr(p.id)}">${escapeHTML(p.name)}</option>`).join("");
+  sel.value=String(ui.project);
+}
+function onProjectFilterChange(value){
+  ui.project=value;state.activeAcct=value;renderAll();document.getElementById("filter-project").value=String(value);toggleMenu(false);
+}
+function promptNewProject(){
+  const name=prompt("ระบุชื่อ Project ใหม่:");if(!name||!name.trim())return;
+  if(state.accounts.some(x=>x.name.trim().toLowerCase()===name.trim().toLowerCase())){alert("มี Project ชื่อนี้อยู่แล้ว");return}
+  const p={id:state.nextAcctId++,name:name.trim()};state.accounts.push(p);ui.project=String(p.id);state.activeAcct=p.id;renderAll();pushData();
+}
+function deleteProject(id){
+  if(state.accounts.length<=1){alert("ต้องมี Project อย่างน้อย 1 รายการ");return}
+  const p=state.accounts.find(x=>sameId(x.id,id));if(!p)return;
+  const count=state.cards.filter(c=>sameId(c.acctId,id)).length;
+  if(!confirm(`ต้องการลบ Project "${p.name}" ใช่หรือไม่?${count?`\n\nContent ใน Project นี้ ${count} งานจะถูกลบด้วย`:""}`))return;
+  state.cards=state.cards.filter(c=>!sameId(c.acctId,id));state.accounts=state.accounts.filter(x=>!sameId(x.id,id));ui.project="all";state.activeAcct="all";renderAll();pushData();
+}
+function projectName(id){const p=state.accounts.find(x=>sameId(x.id,id));return p?p.name:"ไม่พบ Project"}
 
-        function sameId(a, b) {
-            return String(a) === String(b);
-        }
+function getFilteredCards(){
+  const q=ui.search.trim().toLowerCase();
+  return state.cards.filter(c=>{
+    const projectOK=ui.project==="all"||sameId(c.acctId,ui.project);
+    const platformOK=ui.platform==="all"||getPlatforms(c).includes(ui.platform);
+    const statusOK=ui.status==="all"||c.status===ui.status;
+    const text=`${c.title} ${c.caption} ${c.campaign} ${c.pillar} ${projectName(c.acctId)}`.toLowerCase();
+    return projectOK&&platformOK&&statusOK&&(!q||text.includes(q));
+  });
+}
+function setPlatformFilter(v){ui.platform=v;renderAll()}
+function setStatusFilter(v,switchToBoard=true){ui.status=v;document.getElementById("filter-status").value=v;renderAll();if(switchToBoard)switchView("board")}
+function setSearch(v){ui.search=v;renderAll()}
+function clearFilters(){ui.project="all";ui.platform="all";ui.status="all";ui.search="";document.getElementById("filter-platform").value="all";document.getElementById("filter-status").value="all";document.getElementById("search-input").value="";renderAll()}
 
-        function startOfDay(date) {
-            return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-        }
+function renderDashboard(){
+  const cards=getFilteredCards();
+  document.getElementById("kpi-all").textContent=cards.length;
+  document.getElementById("kpi-review").textContent=cards.filter(c=>c.status==="review").length;
+  document.getElementById("kpi-scheduled").textContent=cards.filter(c=>c.status==="scheduled").length;
+  document.getElementById("kpi-done").textContent=cards.filter(c=>c.status==="done").length;
+  const bars=document.getElementById("platform-bars");bars.innerHTML="";
+  const counts=Object.fromEntries(PLATFORMS.map(p=>[p,0]));
+  cards.forEach(c=>getPlatforms(c).forEach(p=>{if(p in counts)counts[p]++}));
+  const max=Math.max(1,...Object.values(counts));
+  PLATFORMS.forEach(p=>{bars.innerHTML+=`<div class="bar-row"><span>${escapeHTML(p)}</span><div class="bar"><span style="width:${(counts[p]/max)*100}%"></span></div><strong>${counts[p]}</strong></div>`});
+  const upcoming=[...cards].filter(c=>c.date&&c.status!=="done").sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)).slice(0,6);
+  const list=document.getElementById("recent-list");list.innerHTML=upcoming.length?"":"<div style='color:#8a93a4;font-size:12px'>ยังไม่มี Upcoming Content</div>";
+  upcoming.forEach(c=>{
+    const item=document.createElement("div");item.className="recent-item";item.onclick=()=>openComposer(c.id);
+    item.innerHTML=`${c.image?`<img class="recent-thumb" src="${escapeAttr(c.image)}">`:`<div class="recent-thumb" style="display:grid;place-items:center">CF</div>`}<div style="min-width:0"><div class="recent-title">${escapeHTML(c.title)}</div><div class="recent-meta">${escapeHTML(projectName(c.acctId))} · ${formatDate(c.date)} ${escapeHTML(c.time||"")}</div></div><span class="status-chip ${c.status}">${STATUS_LABELS[c.status]}</span>`;
+    list.appendChild(item);
+  });
+}
+function renderWorkflowCounts(){
+  ["review","approved","scheduled","done"].forEach(s=>document.getElementById("wf-"+s).textContent=state.cards.filter(c=>c.status===s).length);
+}
+function renderBoard(){
+  const cards=getFilteredCards();
+  STATUSES.forEach(s=>{
+    const list=document.getElementById("list-"+s);list.innerHTML="";
+    const arr=cards.filter(c=>c.status===s).sort(sortCards);
+    document.getElementById("count-"+s).textContent=arr.length;
+    if(!arr.length){list.innerHTML="<div style='font-size:11px;color:#9aa3b4;padding:10px'>ยังไม่มี Content</div>";return}
+    arr.forEach(c=>{
+      const div=document.createElement("div");div.className="card";div.draggable=true;div.ondragstart=e=>e.dataTransfer.setData("text/plain",c.id);div.onclick=()=>openComposer(c.id);
+      const chips=getPlatforms(c).map(p=>`<span class="platform-chip ${platformClass(p)}">${escapeHTML(p)}</span>`).join("");
+      div.innerHTML=`${c.image?`<img class="card-image" src="${escapeAttr(c.image)}" onclick="event.stopPropagation();openImageViewer('${escapeJs(c.image)}')">`:""}<div class="card-title">${escapeHTML(c.title)}</div><div class="card-project">⌂ ${escapeHTML(projectName(c.acctId))}${c.campaign?` · ${escapeHTML(c.campaign)}`:""}</div><div class="card-chips">${chips}</div><div class="card-foot"><span>${escapeHTML(c.pillar||"")}</span><span>${formatDate(c.date)} ${escapeHTML(c.time||"")}</span></div>`;
+      list.appendChild(div);
+    });
+  });
+}
+function sortCards(a,b){const aa=(a.date||"9999-12-31")+" "+(a.time||"23:59");const bb=(b.date||"9999-12-31")+" "+(b.time||"23:59");return aa.localeCompare(bb)||String(a.id).localeCompare(String(b.id))}
+function allowDrop(e){e.preventDefault()}
+function dropCard(e,status){e.preventDefault();const id=e.dataTransfer.getData("text/plain");updateCardStatus(id,status)}
+function updateCardStatus(id,status){if(!STATUSES.includes(status))return;state.cards=state.cards.map(c=>sameId(c.id,id)?{...c,status}:c);renderAll();pushData()}
 
-        function parseDateKey(value) {
-            if (!value || typeof value !== "string") return null;
-            const parts = value.split("-").map(Number);
-            if (parts.length !== 3 || parts.some(Number.isNaN)) return null;
-            return new Date(parts[0], parts[1] - 1, parts[2]);
-        }
+function renderCalendar(){
+  const body=document.getElementById("calendar-body");body.innerHTML="";
+  const year=ui.month.getFullYear(),month=ui.month.getMonth(),first=new Date(year,month,1),last=new Date(year,month+1,0),days=last.getDate(),start=first.getDay();
+  document.getElementById("calendar-title").textContent=`${TH_MONTHS[month]} ${year+543}`;
+  const cards=getFilteredCards();const total=Math.ceil((start+days)/7)*7;let row;
+  for(let i=0;i<total;i++){
+    if(i%7===0){row=document.createElement("tr");body.appendChild(row)}
+    const d=i-start+1;const td=document.createElement("td");
+    if(d<1||d>days){td.className="empty-day";row.appendChild(td);continue}
+    const date=new Date(year,month,d),key=toDateKey(date),today=key===toDateKey(new Date()),items=cards.filter(c=>c.date===key).sort(sortCards);
+    td.className=today?"today":"";td.innerHTML=`<div class="day-top"><span class="day-num">${d}</span><button class="day-add" onclick="openComposer(null,'${key}')">+</button></div>`;
+    items.slice(0,3).forEach(c=>{const el=document.createElement("div");el.className="cal-item";el.textContent=`${c.time?c.time+" ":""}${c.title}`;el.onclick=()=>openComposer(c.id);td.appendChild(el)});
+    if(items.length>3){const more=document.createElement("div");more.style.cssText="font-size:10px;color:#8a93a4";more.textContent=`+${items.length-3} รายการ`;td.appendChild(more)}
+    row.appendChild(td);
+  }
+}
+function changeMonth(n){ui.month=new Date(ui.month.getFullYear(),ui.month.getMonth()+n,1);renderCalendar()}
+function goToday(){ui.month=new Date();renderCalendar()}
 
-        function toDateKey(date) {
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, "0");
-            const day = String(date.getDate()).padStart(2, "0");
-            return `${year}-${month}-${day}`;
-        }
+function openComposer(id=null,presetDate=null){
+  editCardId=id;currentImageData="";renderComposerProjectOptions();
+  const fileInput=document.getElementById("f-image");if(fileInput)fileInput.value="";
+  const modal=document.getElementById("composer-modal");
+  modal.classList.add("show");
+  document.body.style.overflow="hidden";
+  const bodyPane=modal.querySelector(".composer-body");
+  const formPane=modal.querySelector(".compose-form");
+  const previewPane=modal.querySelector(".compose-preview");
+  if(bodyPane)bodyPane.scrollTop=0;
+  if(formPane)formPane.scrollTop=0;
+  if(previewPane)previewPane.scrollTop=0;
+  document.getElementById("delete-btn").style.display=id?"inline-flex":"none";
+  clearPlatformChecks();
+  if(id){
+    const c=state.cards.find(x=>sameId(x.id,id));if(!c)return;
+    document.getElementById("composer-title").textContent="Edit Content";
+    document.getElementById("f-project").value=String(c.acctId);document.getElementById("f-campaign").value=c.campaign||"";document.getElementById("f-pillar").value=c.pillar||"";
+    document.getElementById("f-status").value=c.status;document.getElementById("f-title").value=c.title||"";document.getElementById("f-caption").value=c.caption||"";
+    document.getElementById("f-date").value=c.date||"";document.getElementById("f-time").value=c.time||"";document.getElementById("f-note").value=c.note||"";
+    getPlatforms(c).forEach(p=>{const el=platformCheckbox(p);if(el)el.checked=true});
+    if(c.image){currentImageData=c.image;document.getElementById("upload-img").src=c.image;document.getElementById("upload-preview").style.display="block"}else removeImage(false);
+  }else{
+    document.getElementById("composer-title").textContent="Create Post";
+    document.getElementById("f-project").value=String(ui.project!=="all"?ui.project:state.accounts[0].id);document.getElementById("f-campaign").value="";document.getElementById("f-pillar").value="";
+    document.getElementById("f-status").value="idea";document.getElementById("f-title").value="";document.getElementById("f-caption").value="";
+    document.getElementById("f-date").value=presetDate||toDateKey(new Date());document.getElementById("f-time").value="";document.getElementById("f-note").value="";removeImage(false);
+    document.getElementById("p-facebook").checked=true;
+  }
+  renderPreviewTabs();updatePreview();
+  setTimeout(()=>document.getElementById("f-title").focus(),60);
+}
+function closeComposer(){
+  const modal=document.getElementById("composer-modal");
+  if(modal)modal.classList.remove("show");
+  document.body.style.overflow="";
+}
+function renderComposerProjectOptions(){
+  const select=document.getElementById("f-project");
+  select.innerHTML=state.accounts.map(p=>`<option value="${escapeAttr(p.id)}">${escapeHTML(p.name)}</option>`).join("");
+  select.disabled=state.accounts.length===0;
+}
+function platformCheckbox(p){
+  const map={"Facebook":"p-facebook","Instagram":"p-instagram","TikTok":"p-tiktok","LINE OA":"p-lineoa","Website":"p-website"};
+  return map[p]?document.getElementById(map[p]):null;
+}
+function clearPlatformChecks(){document.querySelectorAll(".plat-check input").forEach(x=>x.checked=false)}
+function selectedPlatforms(){return [...document.querySelectorAll(".plat-check input:checked")].map(x=>x.value)}
+function getPlatforms(card){return String(card.platform||"").split(",").map(x=>x.trim()).filter(Boolean)}
+function platformClass(p){return p.toLowerCase().replace(/\s+/g,"")}
+function renderPreviewTabs(){
+  const selected=selectedPlatforms();const tabs=document.getElementById("preview-tabs");
+  if(!selected.length){tabs.innerHTML="<span style='font-size:10px;color:#8a93a4'>เลือก Platform เพื่อดู Preview</span>";return}
+  if(!selected.includes(previewPlatform))previewPlatform=selected[0];
+  tabs.innerHTML=selected.map(p=>`<button class="preview-tab ${p===previewPlatform?"active":""}" onclick="setPreviewPlatform('${escapeJs(p)}')">${escapeHTML(p)}</button>`).join("");
+}
+function setPreviewPlatform(p){previewPlatform=p;renderPreviewTabs();updatePreview()}
+function updatePreview(){
+  const caption=document.getElementById("f-caption").value||document.getElementById("f-title").value||"Caption preview...";
+  document.getElementById("preview-caption").textContent=caption;document.getElementById("preview-name").textContent=previewPlatform==="Website"?"Website Content":previewPlatform;
+  const d=document.getElementById("f-date").value,t=document.getElementById("f-time").value;document.getElementById("preview-meta").textContent=(d?formatDate(d):"Preview")+(t?" · "+t:"");
+  const img=document.getElementById("preview-media-img"),empty=document.getElementById("preview-media-empty");
+  if(currentImageData){img.src=currentImageData;img.style.display="block";empty.style.display="none"}else{img.style.display="none";empty.style.display="grid"}
+}
+async function previewFile(){
+  const input=document.getElementById("f-image"),file=input.files&&input.files[0];if(!file)return;
+  if(!["image/jpeg","image/png","image/webp","image/gif"].includes(file.type)){alert("รองรับ JPG, PNG, WEBP และ GIF");input.value="";return}
+  if(file.size>5*1024*1024){alert("ไฟล์ต้องไม่เกิน 5 MB");input.value="";return}
+  setSync("","กำลังอัปโหลดรูป...");
+  try{
+    const base64=await readCompressedImage(file);
+    const res=await fetchWithTimeout(API,{method:"POST",credentials:"omit",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action:"uploadImage",base64Data:base64,fileName:file.name})},30000);
+    const txt=await res.text();const result=JSON.parse(txt);if(!result.success)throw new Error(result.message||"Upload failed");
+    currentImageData=result.url||result.directUrl;if(!currentImageData)throw new Error("ไม่พบ URL รูป");
+    document.getElementById("upload-img").src=currentImageData;document.getElementById("upload-preview").style.display="block";updatePreview();setSync("ok","อัปโหลดรูปสำเร็จ");
+  }catch(e){console.error(e);alert("อัปโหลดรูปไม่สำเร็จ");setSync("error","อัปโหลดรูปไม่สำเร็จ");input.value=""}
+}
+function readCompressedImage(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onerror=reject;r.onload=()=>{const data=r.result;if(file.size<=900*1024){resolve(data);return}const img=new Image();img.onload=()=>{const scale=Math.min(1,1280/img.width),c=document.createElement("canvas");c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);c.getContext("2d").drawImage(img,0,0,c.width,c.height);resolve(c.toDataURL("image/jpeg",.82))};img.onerror=()=>resolve(data);img.src=data};r.readAsDataURL(file)})}
+function removeImage(reset=true){currentImageData="";document.getElementById("upload-img").src="";document.getElementById("upload-preview").style.display="none";if(reset)document.getElementById("f-image").value="";updatePreview()}
+function saveCard(){
+  const title=document.getElementById("f-title").value.trim(),project=document.getElementById("f-project").value,platforms=selectedPlatforms();
+  if(!title){alert("กรุณาใส่ Title / Hook");document.getElementById("f-title").focus();return}
+  if(!project||!state.accounts.some(p=>sameId(p.id,project))){alert("กรุณาเลือก Project ที่ถูกต้อง");document.getElementById("f-project").focus();return}
+  if(!platforms.length){alert("กรุณาเลือกอย่างน้อย 1 Platform");return}
+  const status=document.getElementById("f-status").value;
+  if(!STATUSES.includes(status)){alert("สถานะ Content ไม่ถูกต้อง");return}
+  const payload={title,acctId:project,campaign:document.getElementById("f-campaign").value.trim(),pillar:document.getElementById("f-pillar").value,
+    status,platform:platforms.join(", "),caption:document.getElementById("f-caption").value.trim(),
+    date:document.getElementById("f-date").value,time:document.getElementById("f-time").value,image:currentImageData,note:document.getElementById("f-note").value.trim()
+  };
+  if(editCardId)state.cards=state.cards.map(c=>sameId(c.id,editCardId)?{...c,...payload}:c);
+  else state.cards.push({id:state.nextCardId++,...payload,createdAt:new Date().toISOString()});
+  closeComposer();renderAll();pushData();
+}
+function deleteCard(){if(!editCardId)return;if(!confirm("ต้องการลบ Content นี้ใช่หรือไม่?"))return;state.cards=state.cards.filter(c=>!sameId(c.id,editCardId));closeComposer();renderAll();pushData()}
 
-        function formatDate(value) {
-            const date = parseDateKey(value);
-            if (!date) return "-";
-            return `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}/${date.getFullYear() + 543}`;
-        }
-
-        function escapeHTML(value) {
-            return String(value ?? "").replace(/[&<>'"]/g, function (char) {
-                return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char];
-            });
-        }
-
-
-        function escapeJsString(value) {
-            return String(value ?? "")
-                .replace(/\\/g, "\\\\")
-                .replace(/'/g, "\\'")
-                .replace(/\r/g, "\\r")
-                .replace(/\n/g, "\\n")
-                .replace(/<\/script/gi, "<\\/script");
-        }
-
-        function escapeAttribute(value) {
-            return escapeHTML(value).replace(/`/g, "&#96;");
-        }
-    </script>
+function openImageViewer(url){if(!url)return;document.getElementById("viewer-img").src=url;document.getElementById("image-viewer").classList.add("show")}
+function closeImageViewer(){document.getElementById("image-viewer").classList.remove("show")}
+function sameId(a,b){return String(a)===String(b)}
+function toDateKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`}
+function formatDate(v){if(!v)return"-";const p=v.split("-").map(Number);if(p.length!==3)return v;return `${String(p[2]).padStart(2,"0")}/${String(p[1]).padStart(2,"0")}/${p[0]+543}`}
+function escapeHTML(v){return String(v??"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]))}
+function escapeAttr(v){return escapeHTML(v).replace(/`/g,"&#96;")}
+function escapeJs(v){return String(v??"").replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/\r/g,"\\r").replace(/\n/g,"\\n").replace(/<\/script/gi,"<\\/script")}
+</script>
 </body>
 </html>
