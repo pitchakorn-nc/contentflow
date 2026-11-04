@@ -727,11 +727,11 @@
 
             <div class="nav-group" data-section="accounts">
                 <button class="section-toggle" type="button" onclick="toggleSection('accounts')">
-                    <span>บัญชีของฉัน</span><span class="chevron">▾</span>
+                    <span>Project</span><span class="chevron">▾</span>
                 </button>
                 <div class="section-body">
                     <div id="account-list" style="display: flex; flex-direction: column; gap: 2px;"></div>
-                    <button class="btn btn-sub" type="button" onclick="promptNewAccount()">+ เพิ่มบัญชีใหม่</button>
+                    <button class="btn btn-sub" type="button" onclick="promptNewAccount()">+ เพิ่ม Project</button>               
                 </div>
             </div>
         </div>
@@ -1703,7 +1703,7 @@
         }
 
         function promptNewAccount() {
-            const name = prompt("ระบุชื่อบัญชีใหม่:");
+            const name = prompt("ระบุชื่อ Project ใหม่:");
             if (name && name.trim()) {
                 const newAccount = { id: state.nextAcctId++, name: name.trim() };
                 state.accounts.push(newAccount);
